@@ -57,7 +57,7 @@ return ret * temp;
 instructs CARVE to remove the three lines of code between the mapping and the termination tag, and replace it with the single line of code `return 0;`.
 
 ### Implict Feature Mappings
-
+Implicit mappings instruct the debloater to analyze the code following the mapping to determine its structure, and by extension what code should be removed. Implicit mappings obviate the need to handle predictable control-flow implications associated with certain types of code constructs by using explicit mappings with replacement code. Feature mappings that do not have an operator appended to them are considered implicit mappings by CARVE.
 
 ### Limitations
 It is important to note the CARVE operates largely on a line-by-line basis on source code. Though wide leeway in syntax is provided by most programming languages, CARVE does not support all coding styles for implicit feture mappings. For example, if / else if conditional statements that are split across multiple lines in a file will not be debloated properly by CARVE. A (probably incomplete) list of unsupported programming styles can be found in the C/C++ debloating module. It is recommended that incompatible styles (almost all of which arise from statements split across multiple lines for readability) be adjsuted when feature mapping takes place.
