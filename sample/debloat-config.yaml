@@ -1,0 +1,74 @@
+# CARVE Debloater Config File
+# ----------------------------------------------------------------------------------------------------------------------
+# This configuration file specifies the libraries to be debloated.  Each library to be debloated must contain the
+# locations on disk of the source (and header files) to be debloated, as well as the feature hierarchy and features to
+# be debloated. The hierarchy is specified as nested collections that are later recursively searched.  The root,
+# intermediate, and leaf nodes must all have unique names.
+# ----------------------------------------------------------------------------------------------------------------------
+
+Libraries:
+    - name: libmodbus
+      locations:
+        - sample/libmodbus/src/
+        - sample/libmodbus/test/
+      language: C
+      extensions:
+        - h
+        - c
+      debloatable_features:
+        Variant_RTU:
+          RTU_Read:
+              - RTU_Read_Bits
+              - RTU_Read_Input_Bits
+              - RTU_Read_Registers
+              - RTU_Read_Input_Registers
+              - RTU_Report_Slave_ID
+          RTU_Write:
+              - RTU_Write_Bit
+              - RTU_Write_Register
+              - RTU_Write_Bits
+              - RTU_Write_Registers
+              - RTU_Mask_Write_Register
+              - RTU_Write_And_Read_Registers
+          RTU_Raw:
+              - RTU_Send_Raw_Request
+              - RTU_Receive_Confirmation
+        Variant_TCP:
+          TCP_Read:
+              - TCP_Read_Bits
+              - TCP_Read_Input_Bits
+              - TCP_Read_Registers
+              - TCP_Read_Input_Registers
+              - TCP_Report_Slave_ID
+          TCP_Write:
+              - TCP_Write_Bit
+              - TCP_Write_Register
+              - TCP_Write_Bits
+              - TCP_Write_Registers
+              - TCP_Mask_Write_Register
+              - TCP_Write_And_Read_Registers
+          TCP_Raw:
+              - TCP_Send_Raw_Request
+              - TCP_Receive_Confirmation
+        Variant_TCP_PI:
+          TCP_PI_Read:
+              - TCP_PI_Read_Bits
+              - TCP_PI_Read_Input_Bits
+              - TCP_PI_Read_Registers
+              - TCP_PI_Read_Input_Registers
+              - TCP_PI_Report_Slave_ID
+          TCP_PI_Write:
+              - TCP_PI_Write_Bit
+              - TCP_PI_Write_Register
+              - TCP_PI_Write_Bits
+              - TCP_PI_Write_Registers
+              - TCP_PI_Mask_Write_Register
+              - TCP_PI_Write_And_Read_Registers
+          TCP_PI_Raw:
+              - TCP_PI_Send_Raw_Request
+              - TCP_PI_Receive_Confirmation
+      debloat:
+        - Variant_RTU
+        - Variant_TCP
+        - TCP_PI_Write
+        - TCP_PI_Raw
