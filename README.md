@@ -42,9 +42,25 @@ Feature mappings are differentiated from typical comments by a user-definable ta
 To map all of the code in a file to features or feature groups, the `!` marker can be appended to a feature mapping. When CARVE processes this mapping, it produces an empty file rather than deleting the file outright to avoid breaking build processes. For example, the feature mapping `///[FeatureGroup_A]!` placed anywhere within the file will debloat all code in the file if Feature Group A is selected for debloating.
 
 ### Segment Mapping with Optional Replacement
+Segment explicit mappings are indicated by the `~` marker being appended to the feature mapping. When CARVE processes this mapping, it will remove code between the mapping and the next occurring termination marker, indicated by the tag and the `~` marker (`///~`). Replacement code segments can also be specified between the two replacement tags (`///^`) for segment explicit mappings. For example, the debloating with replacement mapping:
 
+```
+///[Feature_Y]~
+///^
+///return 0;
+///^
+int ret = i + a;
+int temp = b - j;
+return ret * temp;
+///~
+```
+instructs CARVE to remove the three lines of code between the mapping and the termination tag, and replace it with the single line of code `return 0;`.
 
 ### Implict Feature Mappings
+
+
+### Limitations
+It is important to note the CARVE operates largely on a line-by-line basis on source code. Though wide leeway in syntax is provided by most programming languages, CARVE does not support all coding styles for implicit feture mappings. For example, if / else if conditional statements that are split across multiple lines in a file will not be debloated properly by CARVE. A (probably incomplete) list of unsupported programming styles can be found in the C/C++ debloating module. It is recommended that incompatible styles (almost all of which arise from statements split across multiple lines for readability) be adjsuted when feature mapping takes place.
 
 
 ## Debloating Source Code
