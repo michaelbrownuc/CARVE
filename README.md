@@ -33,7 +33,19 @@ CARVE is dependent upon the following third party packages / libraries:
  1. PyYAML - file format for config file.  `pip install pyyaml`
 
 ## Mapping Features to Source Code
-TODO
+The following subsections describe the types of feature mappings CARVE currently supports. Additional information on these mappings can be found in the research paper linked above.  Additionally, a fully mapped version of [libmodbus](https://libmodbus.org/) v3.1.4 is provided in the `sample` subdirectory.
+
+### Feature Mapping Anatomy: Tag and Feature(s)
+Feature mappings are differentiated from typical comments by a user-definable tag. Tags are language specific, and must be considered legal comments. The tag used by CARVE's C/C++ debloating module is `///`. Immediately following the tag, one or more features (or feature groups) associated with the tagged code must be listed, each enclosed in a set of square braces `[ ]`. For exmaple, the feature mapping `///[Feature_X][Feature_Y]` identifies the code following the tag as associated with Features X and Y. If both X and Y are selected for debloating, the tagged code will be removed by CARVE.
+
+### Full File Mapping
+To map all of the code in a file to features or feature groups, the `!` marker can be appended to a feature mapping. When CARVE processes this mapping, it produces an empty file rather than deleting the file outright to avoid breaking build processes. For example, the feature mapping `///[FeatureGroup_A]!` placed anywhere within the file will debloat all code in the file if Feature Group A is selected for debloating.
+
+### Segment Mapping with Optional Replacement
+
+
+### Implict Feature Mappings
+
 
 ## Debloating Source Code
 CARVE has the following optional inputs:
