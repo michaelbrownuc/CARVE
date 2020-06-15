@@ -3,7 +3,7 @@ CARVE is a source code based software debloating tool. It can be used to remove 
 
 If you use this tool in your research, please cite the following paper:
 
-**Brown, Michael D., and Santosh Pande. "CARVE: Practical Security-Focused Software Debloating Using Simple Feature Set Mappings". In 3rd ACM Workshop on Forming an Ecosystem Around Software Transformation ({FEAST} 19). 2019.**[\[pdf\]](https://dl.acm.org/doi/abs/10.1145/3338502.3359764)
+**Brown, Michael D., and Santosh Pande. "CARVE: Practical Security-Focused Software Debloating Using Simple Feature Set Mappings". In 3rd ACM Workshop on Forming an Ecosystem Around Software Transformation (FEAST '19). 2019.**[\[pdf\]](https://dl.acm.org/doi/abs/10.1145/3338502.3359764)
 
 ## Description
 CARVE is a source code based software debloater that operates similarly to a compiler's preprocessor. Software features must be mapped to the source code associated with them prior to removal with CARVE. To make this easy, CARVE supports both language agnostic **explicit** feature mappings and language specific **implicit** feature mappings. Implicit feature mappings intelligently determine the code to be removed based on the source code construct marked by the feature mapping. Currently, CARVE supports the following implicit feature mappings for C/C++ source code:
