@@ -50,7 +50,7 @@ shutil.copy2(args.debloat_config, directory_name)
 
 # Parse Configuration File
 try:
-    config = yaml.load(open(args.debloat_config, "r"))
+    config = yaml.safe_load(open(args.debloat_config, "r"))
 except yaml.YAMLError as err:
     logging.error("An error occurred when parsing the debloat config file: {err}".format(err=err))
     sys.exit("Debloating configuration cannot be parsed, aborting operation...")
