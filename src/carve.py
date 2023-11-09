@@ -14,6 +14,7 @@ import argparse
 import logging
 import shutil
 import sys
+from pathlib import Path
 
 # Third Party Imports
 import yaml
@@ -98,26 +99,14 @@ for library in libraries:
 
     # Iterate through library source code locations
     for location in locations:
-        # Create a subfolder for the location
-        try:
-            final_subfolder = get_final_subfolder(location)
-            subfolder_name = create_output_directory(directory_name + "/" + library.get("name") + "/" + final_subfolder, False)
-        except OSError as oserr:
-            print("An OS Error occurred during creation of debloated code directory: " + oserr.strerror)
-            sys.exit("Debloated code cannot be written to disk, exiting...")
-
-        # Iterate through files in the location
-        for file in os.listdir(location):
-            if get_extension(file) in extensions:
-                logging.info("Processing file: " + file)
-
-                print("Currently debloating " + file)
-
-                # Copy the file to the results directory if it is one of the specified extensions to debloat.
-                shutil.copy2(location + "/" + file, subfolder_name)
-
-                # Process the copied file
-                resource_debloater = language_type(subfolder_name + "/" + file, target_features)
-                resource_debloater.read_from_disk()
-                resource_debloater.debloat()
-                resource_debloater.write_to_disk()
+        for dirpath, dirnames, filenames in os.walk(location):
+            # Iterate through files in the location
+            for filename in filenames:
+                file = Path(dirpath) / filename
+                if get_extension(file.name) in extensions:
+                    logging.info(f"Processing file: {file}")
+                    # Process the file
+                    resource_debloater = language_type(file, target_features)
+                    resource_debloater.read_from_disk()
+                    resource_debloater.debloat()
+                    resource_debloater.write_to_disk()

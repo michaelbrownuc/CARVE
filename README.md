@@ -21,11 +21,10 @@ CARVE takes as input a configuration file specifying the following pieces of inf
  4. Names of software features that can be debloated (expressed as a hierarchy to simplify feature mapping)
  5. Names of the features (or feature groups) to debloat
 
-CARVE produces as output a timestamped results folder containing:
+CARVE debloats the source code in-place and produces as output a timestamped results folder containing:
 
  1. A copy of the debloating configuration file.
  2. A log file containing output generated during the debloating process.
- 3. A folder containing the debloated source code, which can be then compiled to produce a debloated binary.
 
 ## Dependencies
 CARVE is dependent upon the following third party packages / libraries:
