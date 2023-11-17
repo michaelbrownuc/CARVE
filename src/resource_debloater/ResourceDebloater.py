@@ -54,8 +54,7 @@ class ResourceDebloater(object):
         Replace the file on disk with the new debloated file.
         :return: None
         """
-        logging.info(f"Writing debloated version of {self.location} to disk.  Removing old version.")
-        os.remove(self.location)
+        logging.info(f"Writing debloated version of {self.location} to disk.")
         file = open(self.location, "w")
         file.writelines(self.lines)
         file.close()
