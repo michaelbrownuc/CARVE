@@ -4,12 +4,30 @@ Python Resource Debloater
 
 # Standard Library Imports
 import logging
+import re
 
 # Third Party Imports
 import libcst as cst
+import libcst.matchers as m
 # Local Imports
 from resource_debloater.ResourceDebloater import ResourceDebloater
 
+class PythonImplicitDebloater(cst.CSTTransformer):
+    """Transformer for debloating Python code with implicit annotations"""
+
+    def debloat_comment(comment_str: str) -> bool:
+        # TODO Only debloat if annotation matches
+        return re.search("##\[.*\]~", comment_str) is not None
+
+    def leave_FunctionDef(self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef) -> cst.FunctionDef:
+        # debloat function if the comment directly before it is an annotation
+        # TODO Preserve comments before annotation
+        if len(original_node.leading_lines) > 0:
+            last_line = original_node.leading_lines[-1]
+            if m.matches(last_line, m.EmptyLine(comment=m.Comment(m.MatchIfTrue(PythonImplicitDebloater.debloat_comment)))):
+                indent = last_line.indent
+                return cst.EmptyLine(indent=indent, comment=cst.Comment("# Function Debloated"), newline=cst.Newline())
+        return updated_node
 
 class PythonResourceDebloater(ResourceDebloater):
     """
@@ -26,7 +44,7 @@ class PythonResourceDebloater(ResourceDebloater):
 
         # If you desire to use a different mapping sequence, it can be adjusted here.
         self.annotation_sequence = "##["
-        self.tree = None
+        self.module = None
 
     @staticmethod
     def get_features(line):
@@ -59,7 +77,7 @@ class PythonResourceDebloater(ResourceDebloater):
         :return: None
         """
         with open(self.location, 'r') as f:
-            self.tree = cst.parse_module(f.read())
+            self.module = cst.parse_module(f.read())
 
     def write_to_disk(self):
         """
@@ -67,7 +85,7 @@ class PythonResourceDebloater(ResourceDebloater):
         :return: None
         """
         with open(self.location, 'w') as f:
-            f.write(self.tree.code)
+            f.write(self.module.code)
 
     def debloat(self):
         """
@@ -75,3 +93,5 @@ class PythonResourceDebloater(ResourceDebloater):
         :return: None
         """
         logging.info(f"Beginning debloating pass on {self.location}")
+        modified = self.module.visit(PythonImplicitDebloater())
+        self.module = modified
