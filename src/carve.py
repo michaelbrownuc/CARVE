@@ -22,6 +22,7 @@ import yaml
 # Local Imports
 from utility import *
 from resource_debloater.CResourceDebloater import CResourceDebloater
+from resource_debloater.PythonResourceDebloater import PythonResourceDebloater
 
 
 # Parse command line options
@@ -90,7 +91,7 @@ for library in libraries:
     language = library.get("language")
 
     # Currently only supports C/C++ - If new debloating modules are created the opts dict below must be updated.
-    language_opts = {"C": CResourceDebloater}
+    language_opts = {"C": CResourceDebloater, "Python": PythonResourceDebloater}
     language_type = language_opts.get(language)
 
     if language_type is None:

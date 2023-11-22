@@ -30,6 +30,7 @@ CARVE debloats the source code in-place and produces as output a timestamped res
 CARVE is dependent upon the following third party packages / libraries:
 
  1. PyYAML - file format for config file.  `pip install pyyaml`
+ 2. libcst - Parse Python code `pip install libcst`
 
 ## Mapping Features to Source Code
 The following subsections describe the types of feature mappings CARVE currently supports. Additional information on these mappings can be found in the research paper linked above.  Additionally, a fully mapped version of [libmodbus](https://libmodbus.org/) v3.1.4 is provided in the `sample` subdirectory.
