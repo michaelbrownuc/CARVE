@@ -6,6 +6,7 @@ C Resource Debloater
 import logging
 import re
 import sys
+import subprocess
 
 # Third Party Imports
 
@@ -37,6 +38,14 @@ class CResourceDebloater(ResourceDebloater):
         
         # If you desire to use a different mapping sequence, it can be adjusted here.
         self.annotation_sequence = "///["
+
+    def format_file(self):
+        """
+        Format file with clang-format before debloating
+        """
+        subprocess.run(["clang-format", "--style={BasedOnStyle: llvm, InsertBraces: true}", "-i", self.location],
+                    check=True)
+
 
     @staticmethod
     def get_features(line):

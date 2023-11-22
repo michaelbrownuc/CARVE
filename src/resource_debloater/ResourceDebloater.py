@@ -31,6 +31,14 @@ class ResourceDebloater(object):
         self.target_features = target_features
         self.lines = []
 
+    def format_file(self):
+        """
+        Defined as an abstract method.  Logs error and exits if invoked, as derived classes of ResourceDebloater should
+        implement this function.
+        """
+        logging.error("No debloater defined, interface debloater was invoked.  Aborting.")
+        sys.exit("No debloater defined, interface debloater was invoked.  Aborting.")
+
     def read_from_disk(self):
         """
         Reads the file from disk, saving each line into the object's internal representation

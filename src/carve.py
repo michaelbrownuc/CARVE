@@ -107,6 +107,7 @@ for library in libraries:
                     logging.info(f"Processing file: {file}")
                     # Process the file
                     resource_debloater = language_type(file, target_features)
+                    resource_debloater.format_file()
                     resource_debloater.read_from_disk()
                     resource_debloater.debloat()
                     resource_debloater.write_to_disk()
