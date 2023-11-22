@@ -42,3 +42,13 @@ class PythonImplicitDebloater(cst.CSTTransformer):
                     return modified_node
 
         return updated_node
+
+    def leave_Else(self, original_node: cst.Else, updated_node: cst.Else) -> cst.Else:
+        """Debloat Else statement"""
+        if len(original_node.leading_lines) > 0:
+            last_line = original_node.leading_lines[-1]
+            if m.matches(last_line, m.EmptyLine(comment=m.Comment(m.MatchIfTrue(PythonImplicitDebloater.debloat_comment)))):
+                indent = last_line.indent
+                # TODO fix indentation of replacement code
+                return cst.EmptyLine(indent=indent, comment=cst.Comment("# Else Statement Debloated"), newline=cst.Newline())
+        return updated_node
