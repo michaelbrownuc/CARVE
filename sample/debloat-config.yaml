@@ -9,8 +9,7 @@
 Libraries:
     - name: libmodbus
       locations:
-        - sample/libmodbus/src/
-        - sample/libmodbus/test/
+        - sample/libmodbus/
       language: C
       extensions:
         - h

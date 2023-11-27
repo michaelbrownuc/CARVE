@@ -319,7 +319,7 @@ class CResourceDebloater(ResourceDebloater):
         Iterates through the file and debloats the selected features subject to dependency constraints
         :return: None
         """
-        logging.info("Beginning debloating pass on " + self.location)
+        logging.info(f"Beginning debloating pass on {self.location}")
 
         # Search the source code for debloater annotations, and process them.
         current_line = 0

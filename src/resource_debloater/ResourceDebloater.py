@@ -6,6 +6,7 @@ Resource Debloater
 import logging
 import os
 import sys
+from pathlib import Path
 
 # Third Party Imports
 
@@ -19,7 +20,7 @@ class ResourceDebloater(object):
     resource debloater and handles common tasks such as reading the file from disk into a data structure.
     """
 
-    def __init__(self, location, target_features):
+    def __init__(self, location: Path, target_features):
         """
         ResourceDebloater constructor
         :param str location: Filepath of the file on disk to debloat.
@@ -35,7 +36,7 @@ class ResourceDebloater(object):
         Reads the file from disk, saving each line into the object's internal representation
         :return: None
         """
-        logging.info("Reading " + self.location + " from disk")
+        logging.info(f"Reading {self.location} from disk")
         file = open(self.location, "r")
         self.lines = file.readlines()
         file.close()
@@ -53,8 +54,7 @@ class ResourceDebloater(object):
         Replace the file on disk with the new debloated file.
         :return: None
         """
-        logging.info("Writing debloated version of " + self.location + " to disk.  Removing old version.")
-        os.remove(self.location)
+        logging.info(f"Writing debloated version of {self.location} to disk.")
         file = open(self.location, "w")
         file.writelines(self.lines)
         file.close()
