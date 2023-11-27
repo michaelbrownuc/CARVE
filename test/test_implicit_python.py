@@ -87,3 +87,43 @@ a = 2
     module = cst.parse_module(input)
     modified = module.visit(PythonImplicitDebloater())
     assert modified.code == expected
+
+
+def test_single_statement():
+    input = \
+    """
+print("hello world")
+a = 1
+a += 1
+###[Variant_A]~
+print(f"a is {a}")
+    """
+    expected = \
+    """
+print("hello world")
+a = 1
+a += 1
+# Statement Debloated
+    """
+    module = cst.parse_module(input)
+    modified = module.visit(PythonImplicitDebloater())
+    assert modified.code == expected
+
+
+def test_leading_statement():
+    input = \
+    """
+###[Variant_A]~
+def func(a):
+    a += 1
+    print(a)
+a = 2
+    """
+    expected = \
+    """
+# Statement Debloated
+a = 2
+    """
+    module = cst.parse_module(input)
+    modified = module.visit(PythonImplicitDebloater())
+    assert modified.code == expected
