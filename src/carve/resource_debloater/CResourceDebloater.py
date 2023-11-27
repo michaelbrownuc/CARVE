@@ -10,7 +10,7 @@ import sys
 # Third Party Imports
 
 # Local Imports
-from resource_debloater.ResourceDebloater import ResourceDebloater
+from carve.resource_debloater.ResourceDebloater import ResourceDebloater
 
 
 class CResourceDebloater(ResourceDebloater):

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CARVE Debloater
+CARVE Debloater CLI
 This script's primary purpose is to read in the specified debloating configuration and target folder containing the
 target library source code, and apply the appropriate transformations to the source code.
 
@@ -20,12 +20,11 @@ from pathlib import Path
 import yaml
 
 # Local Imports
-from utility import *
-from resource_debloater.CResourceDebloater import CResourceDebloater
-from resource_debloater.PythonResourceDebloater import PythonResourceDebloater
+from carve.utility import *
+from carve.resource_debloater.CResourceDebloater import CResourceDebloater
+from carve.resource_debloater.PythonResourceDebloater import PythonResourceDebloater
 
 def main() -> None:
-    """CARVE CLI"""
     # Parse command line options
     log_opts = {"DEBUG": logging.DEBUG, "INFO": logging.INFO, "WARNING": logging.WARNING, "ERROR": logging.ERROR,
                 "CRITICAL": logging.CRITICAL}
@@ -112,6 +111,3 @@ def main() -> None:
                         resource_debloater.read_from_disk()
                         resource_debloater.debloat()
                         resource_debloater.write_to_disk()
-
-if __name__ == "__main__":
-    main()

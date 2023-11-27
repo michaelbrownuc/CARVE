@@ -9,8 +9,8 @@ import logging
 import libcst as cst
 
 # Local Imports
-from resource_debloater.ResourceDebloater import ResourceDebloater
-from resource_debloater.PythonImplicitDebloater import PythonImplicitDebloater
+from carve.resource_debloater.ResourceDebloater import ResourceDebloater
+from carve.resource_debloater.PythonImplicitDebloater import PythonImplicitDebloater
 
 class PythonResourceDebloater(ResourceDebloater):
     """

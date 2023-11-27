@@ -26,11 +26,8 @@ CARVE debloats the source code in-place and produces as output a timestamped res
  1. A copy of the debloating configuration file.
  2. A log file containing output generated during the debloating process.
 
-## Dependencies
-CARVE is dependent upon the following third party packages / libraries:
-
- 1. PyYAML - file format for config file.  `pip install pyyaml`
- 2. libcst - Parse Python code `pip install libcst`
+## Installation
+Run `pip install .` to install CARVE and dependencies.
 
 ## Mapping Features to Source Code
 The following subsections describe the types of feature mappings CARVE currently supports. Additional information on these mappings can be found in the research paper linked above.  Additionally, a fully mapped version of [libmodbus](https://libmodbus.org/) v3.1.4 is provided in the `sample` subdirectory.
@@ -74,7 +71,7 @@ CARVE has 1 required input:
 
 Example invocations:
 ```
-python3 CARVE.py --log_level [level] [path to config file]
+python3 -m carve --log_level [level] [path to config file]
 
-python3 CARVE.PY /sample/debloat-config.yaml
+python3 -m carve sample/debloat-config.yaml
 ```
