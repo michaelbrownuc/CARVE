@@ -29,6 +29,7 @@ class PythonImplicitDebloater(cst.CSTTransformer):
 
         Debloat entire If statement if there is no else, otherwise just debloat branch body
         """
+        # TODO debloat annotation label too
         if len(original_node.leading_lines) > 0:
             last_line = original_node.leading_lines[-1]
             if m.matches(last_line, m.EmptyLine(comment=m.Comment(m.MatchIfTrue(PythonImplicitDebloater.debloat_comment)))):
@@ -45,10 +46,12 @@ class PythonImplicitDebloater(cst.CSTTransformer):
 
     def leave_Else(self, original_node: cst.Else, updated_node: cst.Else) -> cst.Else:
         """Debloat Else statement"""
+        # TODO debloat annotation label too
         if len(original_node.leading_lines) > 0:
             last_line = original_node.leading_lines[-1]
             if m.matches(last_line, m.EmptyLine(comment=m.Comment(m.MatchIfTrue(PythonImplicitDebloater.debloat_comment)))):
                 indent = last_line.indent
                 # TODO fix indentation of replacement code
-                return cst.EmptyLine(indent=indent, comment=cst.Comment("# Else Statement Debloated"), newline=cst.Newline())
+                modified_node = updated_node.with_deep_changes(updated_node.body, body=[cst.EmptyLine(indent=indent, comment=cst.Comment("# Else Statement Debloated"), newline=cst.Newline())])
+                return modified_node
         return updated_node
