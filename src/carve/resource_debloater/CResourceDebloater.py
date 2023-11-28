@@ -39,23 +39,6 @@ class CResourceDebloater(ResourceDebloater):
         self.annotation_sequence = "///["
 
     @staticmethod
-    def get_features(line):
-        """
-        Returns a set of features specified in the annotation.
-        :param str line: line of code containing an annotation.
-        :return: A set of the features specified in the annotation.
-        """
-        feature_list = line.split("][")
-
-        first_trim_point = feature_list[0].find("[") + 1
-        feature_list[0] = feature_list[0][first_trim_point:]
-
-        last_trim_point = feature_list[len(feature_list)-1].find("]")
-        feature_list[len(feature_list)-1] = feature_list[len(feature_list)-1][:last_trim_point]
-
-        return set(feature_list)
-
-    @staticmethod
     def get_construct(line):
         """
         Returns a string detailing the construct found at the line number.  Currently supports identifying the following

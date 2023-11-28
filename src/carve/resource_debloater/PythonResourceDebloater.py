@@ -4,6 +4,7 @@ Python Resource Debloater
 
 # Standard Library Imports
 import logging
+from typing import Set
 
 # Third Party Imports
 import libcst as cst
@@ -17,7 +18,7 @@ class PythonResourceDebloater(ResourceDebloater):
     This class implements a resource debloater for the Python language.
     """
 
-    def __init__(self, location, target_features):
+    def __init__(self, location: str, target_features: Set[str]):
         """
         PythonResourceDebloater constructor
         :param str location: Filepath of the file on disk to debloat.
@@ -28,23 +29,6 @@ class PythonResourceDebloater(ResourceDebloater):
         # If you desire to use a different mapping sequence, it can be adjusted here.
         self.annotation_sequence = "###["
         self.module = None
-
-    @staticmethod
-    def get_features(line):
-        """
-        Returns a set of features specified in the annotation.
-        :param str line: line of code containing an annotation.
-        :return: A set of the features specified in the annotation.
-        """
-        feature_list = line.split("][")
-
-        first_trim_point = feature_list[0].find("[") + 1
-        feature_list[0] = feature_list[0][first_trim_point:]
-
-        last_trim_point = feature_list[len(feature_list)-1].find("]")
-        feature_list[len(feature_list)-1] = feature_list[len(feature_list)-1][:last_trim_point]
-
-        return set(feature_list)
 
     def process_annotation(self, annotation_line):
         """
@@ -76,5 +60,5 @@ class PythonResourceDebloater(ResourceDebloater):
         :return: None
         """
         logging.info(f"Beginning debloating pass on {self.location}")
-        modified = self.module.visit(PythonImplicitDebloater())
+        modified = self.module.visit(PythonImplicitDebloater(self.target_features))
         self.module = modified
