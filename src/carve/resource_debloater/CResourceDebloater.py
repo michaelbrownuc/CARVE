@@ -65,34 +65,24 @@ class CResourceDebloater(ResourceDebloater):
         else:
             return "Statement"
 
-    def process_annotation(self, annotation_line):
+    def process_explicit_annotation(self, annotation_line: int) -> None:
         """
-        Processes an implicit or explicit (! and ~) debloating operation annotated at the specified line.
+        Process annotation if explicit (! or ~)
 
-        This debloating module operates largely on a line by line basis. It does NOT support all types of source code
-        authoring styles. Many code authoring styles are not supported and will cause errors in debloating. 
-
-        Not Supported: Implicit annotations must be immediately preceding the construct to debloat.  There cannot
-        be empty lines, comments, or block comments between the annotation and the construct.
-
-        Not Supported: This processor assumes that all single statement debloating operations can remove the line
-        wholesale. Multi-line statements will not be completely debloated.
-
-        Not Supported: This processor assumes all execution branch statements have the entire condition expressed on
-        the same line as the keyword.
-
-        Not Supported: This processor expects all branches to be enclosed in braces, single statement blocks will cause
-        errors.
+        Explicit annotations are debloated as a group of lines. File annotations (!) debloat all lines.
+        Segment annotations (~) debloat all lines between an opening and closing explicit annotation.
 
         :param int annotation_line: Line where annotation to be processed is located.
         :return: None
         """
-        # Check the annotation line for explicit cues ! and ~
+
         last_char = self.lines[annotation_line].strip()[-1]
+        # debloat full file
         if last_char == "!":
             self.lines = []
             self.lines.append("///File Debloated.\n")
             self.lines.append("\n")
+        # debloat segment
         elif last_char == "~":
             segment_end = None
             search_line = annotation_line + 1
@@ -136,7 +126,38 @@ class CResourceDebloater(ResourceDebloater):
                         insert_point += 1
 
                     self.lines.insert(annotation_line + insert_point, "\n")
+        else:
+            logging.error("Tried to debloat annotation that isn't explicit" + str(annotation_line) +
+                            ".  Marking location and skipping this annotation.")
+            self.lines.insert(annotation_line+1, "/// Segment NOT removed because unexpectedly not explicit annotation.\n")
 
+    def process_annotation(self, annotation_line: int) -> None:
+        """
+        Processes an implicit or explicit (! and ~) debloating operation annotated at the specified line.
+
+        This debloating module operates largely on a line by line basis. It does NOT support all types of source code
+        authoring styles. Many code authoring styles are not supported and will cause errors in debloating.
+
+        Not Supported: Implicit annotations must be immediately preceding the construct to debloat.  There cannot
+        be empty lines, comments, or block comments between the annotation and the construct.
+
+        Not Supported: This processor assumes that all single statement debloating operations can remove the line
+        wholesale. Multi-line statements will not be completely debloated.
+
+        Not Supported: This processor assumes all execution branch statements have the entire condition expressed on
+        the same line as the keyword.
+
+        Not Supported: This processor expects all branches to be enclosed in braces, single statement blocks will cause
+        errors.
+
+        :param int annotation_line: Line where annotation to be processed is located.
+        :return: None
+        """
+        # Check the annotation line for explicit cues ! and ~
+        last_char = self.lines[annotation_line].strip()[-1]
+        is_explicit_annotation = last_char in {"~", "!"}
+        if is_explicit_annotation:
+            self.process_explicit_annotation(annotation_line)
         # If not explicit, look at next line to determine the implicit cue
         else:
             construct_line = annotation_line + 1
