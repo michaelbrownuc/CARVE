@@ -36,7 +36,7 @@ class CResourceDebloater(ResourceDebloater):
         super(CResourceDebloater, self).__init__(location, target_features)
         
         # If you desire to use a different mapping sequence, it can be adjusted here.
-        self.annotation_sequence = "///["
+        self.annotation_sequence = "///"
 
     @staticmethod
     def get_construct(line):
@@ -64,72 +64,6 @@ class CResourceDebloater(ResourceDebloater):
             return "FunctionStructDefinition"
         else:
             return "Statement"
-
-    def process_explicit_annotation(self, annotation_line: int) -> None:
-        """
-        Process annotation if explicit (! or ~)
-
-        Explicit annotations are debloated as a group of lines. File annotations (!) debloat all lines.
-        Segment annotations (~) debloat all lines between an opening and closing explicit annotation.
-
-        :param int annotation_line: Line where annotation to be processed is located.
-        :return: None
-        """
-
-        last_char = self.lines[annotation_line].strip()[-1]
-        # debloat full file
-        if last_char == "!":
-            self.lines = []
-            self.lines.append("///File Debloated.\n")
-            self.lines.append("\n")
-        # debloat segment
-        elif last_char == "~":
-            segment_end = None
-            search_line = annotation_line + 1
-            replacement_code = []
-
-            # Check for replacement code following the segment debloat annotation.  If found, remove and store for later
-            if self.lines[search_line].find("///^") > -1:
-                self.lines.pop(search_line)
-
-                while self.lines[search_line].find("///^") < 0:
-                    replacement_code.append(self.lines.pop(search_line).replace("///", ""))
-
-                self.lines.pop(search_line)
-
-            while search_line < len(self.lines):
-                if self.lines[search_line].find("///~") > -1:
-                    segment_end = search_line
-                    break
-                else:
-                    search_line += 1
-
-            if segment_end is None:
-                logging.error("No termination annotation found for segment annotation on line " + str(annotation_line) +
-                              ".  Marking location and skipping this annotation.")
-                self.lines.insert(annotation_line+1, "/// Segment NOT removed due to lack of termination annotation.\n")
-            else:
-                while segment_end != annotation_line:
-                    self.lines.pop(segment_end)
-                    segment_end -= 1
-                self.lines[annotation_line] = "/// Segment Debloated.\n"
-                self.lines.insert(annotation_line + 1, "\n")
-
-                # Insert replacement code if it exists
-                if len(replacement_code) > 0:
-                    insert_point = 2
-                    self.lines.insert(annotation_line + insert_point, "/// Code Inserted:\n")
-                    insert_point += 1
-
-                    for replacement_line in replacement_code:
-                        self.lines.insert(annotation_line + insert_point, replacement_line)
-                        insert_point += 1
-
-                    self.lines.insert(annotation_line + insert_point, "\n")
-        else:
-            logging.error("Tried to debloat annotation that isn't explicit" + str(annotation_line) +
-                            ".  Marking location and skipping this annotation.")
-            self.lines.insert(annotation_line+1, "/// Segment NOT removed because unexpectedly not explicit annotation.\n")
 
     def process_annotation(self, annotation_line: int) -> None:
         """
@@ -189,12 +123,12 @@ class CResourceDebloater(ResourceDebloater):
                     logging.error("Error finding end of code block annotated on line " + str(annotation_line) +
                                   ".  Marking location and skipping this annotation.")
                     self.lines.insert(annotation_line + 1,
-                                      "/// Block NOT removed due to lack of termination brace.\n")
+                                      f"{self.annotation_sequence} Block NOT removed due to lack of termination brace.\n")
                 else:
                     while block_end != annotation_line:
                         self.lines.pop(block_end)
                         block_end -= 1
-                    self.lines[annotation_line] = "/// Code Block Debloated.\n"
+                    self.lines[annotation_line] = f"{self.annotation_sequence} Code Block Debloated.\n"
                     self.lines.insert(annotation_line + 1, " \n")
 
             elif construct == "IfBranch" or construct == "ElseIfBranch":
@@ -229,7 +163,7 @@ class CResourceDebloater(ResourceDebloater):
                     logging.error("Error finding end of code block annotated on line " + str(annotation_line) +
                                   ".  Marking location and skipping this annotation.")
                     self.lines.insert(annotation_line + 1,
-                                      "/// Block NOT removed due to lack of termination brace.\n")
+                                      f"{self.annotation_sequence} Block NOT removed due to lack of termination brace.\n")
                 else:
                     # Remove the code on line after open curly brace, and before the closing curly brace.
                     # Need this in case the braces aren't on their own line.
@@ -239,7 +173,7 @@ class CResourceDebloater(ResourceDebloater):
                     while block_end != open_brace_line:
                         self.lines.pop(block_end)
                         block_end -= 1
-                    self.lines[annotation_line] = "/// If / Else If Code Block Debloated.\n"
+                    self.lines[annotation_line] = f"{self.annotation_sequence} If / Else If Code Block Debloated.\n"
 
             elif construct == "Case":
                 # Removing a case statement requires checking for fall through logic:
@@ -266,11 +200,11 @@ class CResourceDebloater(ResourceDebloater):
                     logging.error("Error finding previous case or switch for case on line " + str(annotation_line) +
                                   ".  Marking location and skipping this annotation.")
                     self.lines.insert(annotation_line + 1,
-                                      "/// Case NOT removed due to lack of switch or previous case.\n")
+                                      f"{self.annotation_sequence} Case NOT removed due to lack of switch or previous case.\n")
 
                 # If previous case has fall through logic, only the case label can be deleted.
                 elif previous_break is False:
-                    self.lines[annotation_line] = "/// Case Label Debloated.\n"
+                    self.lines[annotation_line] = f"{self.annotation_sequence} Case Label Debloated.\n"
                     self.lines[construct_line] = "\n"
 
                 # If the previous case does not have fall through logic, then search for next break, case, or default
@@ -289,7 +223,7 @@ class CResourceDebloater(ResourceDebloater):
                             case_end = search_line - 1
 
                             # Check that the line before the next case (or default) isn't a debloating annotation.
-                            if self.lines[case_end].find(self.annotation_sequence) > -1:
+                            if self.lines[case_end].find(f"{self.annotation_sequence}[") > -1:
                                 case_end -= 1
                             break
                         elif re.search("\sbreak\s*;", " " + self.lines[search_line].strip()) is not None:
@@ -302,16 +236,16 @@ class CResourceDebloater(ResourceDebloater):
                         logging.error("No end of switch block found for case annotation on line " + str(annotation_line)
                                       + ".  Marking location and skipping this annotation.")
                         self.lines.insert(annotation_line + 1,
-                                          "/// Case block NOT removed due to failure to identify end of block.\n")
+                                          f"{self.annotation_sequence} Case block NOT removed due to failure to identify end of block.\n")
                     else:
                         while case_end != annotation_line:
                             self.lines.pop(case_end)
                             case_end -= 1
-                        self.lines[annotation_line] = "/// Case Block Debloated.\n"
+                        self.lines[annotation_line] = f"{self.annotation_sequence} Case Block Debloated.\n"
                         self.lines.insert(annotation_line + 1, " \n")
 
             elif construct == "Statement":
-                self.lines[annotation_line] = "/// Statement Debloated.\n"
+                self.lines[annotation_line] = f"{self.annotation_sequence} Statement Debloated.\n"
                 self.lines[construct_line] = "\n"
             else:
                 # Log error and exit
@@ -329,7 +263,7 @@ class CResourceDebloater(ResourceDebloater):
         current_line = 0
 
         while current_line < len(self.lines):
-            if self.lines[current_line].find(self.annotation_sequence) > -1:
+            if self.lines[current_line].find(f"{self.annotation_sequence}[") > -1:
                 logging.info("Annotation found on line " + str(current_line))
 
                 feature_set = CResourceDebloater.get_features(self.lines[current_line])

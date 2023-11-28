@@ -31,6 +31,7 @@ class ResourceDebloater(object):
         self.location = location
         self.target_features = target_features
         self.lines = []
+        self.annotation_sequence = None
 
     def read_from_disk(self) -> None:
         """
@@ -76,3 +77,69 @@ class ResourceDebloater(object):
         feature_list[len(feature_list)-1] = feature_list[len(feature_list)-1][:last_trim_point]
 
         return set(feature_list)
+
+    def process_explicit_annotation(self, annotation_line: int) -> None:
+        """
+        Process annotation if explicit (! or ~)
+
+        Explicit annotations are debloated as a group of lines. File annotations (!) debloat all lines.
+        Segment annotations (~) debloat all lines between an opening and closing explicit annotation.
+
+        :param int annotation_line: Line where annotation to be processed is located.
+        :return: None
+        """
+
+        last_char = self.lines[annotation_line].strip()[-1]
+        # debloat full file
+        if last_char == "!":
+            self.lines = []
+            self.lines.append(f"{self.annotation_sequence}File Debloated.\n")
+            self.lines.append("\n")
+        # debloat segment
+        elif last_char == "~":
+            segment_end = None
+            search_line = annotation_line + 1
+            replacement_code = []
+
+            # Check for replacement code following the segment debloat annotation.  If found, remove and store for later
+            if self.lines[search_line].find(f"{self.annotation_sequence}^") > -1:
+                self.lines.pop(search_line)
+
+                while self.lines[search_line].find(f"{self.annotation_sequence}^") < 0:
+                    replacement_code.append(self.lines.pop(search_line).replace(self.annotation_sequence, ""))
+
+                self.lines.pop(search_line)
+
+            while search_line < len(self.lines):
+                if self.lines[search_line].find(f"{self.annotation_sequence}~") > -1:
+                    segment_end = search_line
+                    break
+                else:
+                    search_line += 1
+
+            if segment_end is None:
+                logging.error("No termination annotation found for segment annotation on line " + str(annotation_line) +
+                              ".  Marking location and skipping this annotation.")
+                self.lines.insert(annotation_line+1, f"{self.annotation_sequence} Segment NOT removed due to lack of termination annotation.\n")
+            else:
+                while segment_end != annotation_line:
+                    self.lines.pop(segment_end)
+                    segment_end -= 1
+                self.lines[annotation_line] = f"{self.annotation_sequence} Segment Debloated.\n"
+                self.lines.insert(annotation_line + 1, "\n")
+
+                # Insert replacement code if it exists
+                if len(replacement_code) > 0:
+                    insert_point = 2
+                    self.lines.insert(annotation_line + insert_point, f"{self.annotation_sequence} Code Inserted:\n")
+                    insert_point += 1
+
+                    for replacement_line in replacement_code:
+                        self.lines.insert(annotation_line + insert_point, replacement_line)
+                        insert_point += 1
+
+                    self.lines.insert(annotation_line + insert_point, "\n")
+        else:
+            logging.error("Tried to debloat annotation that isn't explicit" + str(annotation_line) +
+                            ".  Marking location and skipping this annotation.")
+            self.lines.insert(annotation_line+1, f"{self.annotation_sequence} Segment NOT removed because unexpectedly not explicit annotation.\n")
