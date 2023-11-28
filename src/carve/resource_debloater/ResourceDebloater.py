@@ -93,7 +93,7 @@ class ResourceDebloater(object):
         # debloat full file
         if last_char == "!":
             self.lines = []
-            self.lines.append(f"{self.annotation_sequence}File Debloated.\n")
+            self.lines.append(f"{self.annotation_sequence} File Debloated.\n")
             self.lines.append("\n")
         # debloat segment
         elif last_char == "~":

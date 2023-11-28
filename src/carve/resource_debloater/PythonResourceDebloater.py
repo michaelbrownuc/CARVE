@@ -5,6 +5,7 @@ Python Resource Debloater
 # Standard Library Imports
 import logging
 from typing import Set
+import re
 
 # Third Party Imports
 import libcst as cst
@@ -54,11 +55,41 @@ class PythonResourceDebloater(ResourceDebloater):
         with open(self.location, 'w') as f:
             f.write(self.module.code)
 
+    def debloat_explicit_comment(self, comment_str: str) -> bool:
+        """Return whether the comment is an explicit annotation with only target features"""
+        # determine if explicit annotation
+        if re.search(f"^\\s*{self.annotation_sequence}\\[.*\\](~|!)\\s*$", comment_str) is not None:
+            comment_features = PythonResourceDebloater.get_features(comment_str)
+            # debloat if features in comment are subset of target debloated features
+            return self.target_features.issuperset(comment_features)
+        return False
+
+    def debloat_explicit(self):
+        """Debloat explicit annotations"""
+        self.lines = self.module.code.split("\n")
+        # Search the source code for explicit debloater annotations and process them.
+        current_line = 0
+        while current_line < len(self.lines):
+            if self.debloat_explicit_comment(self.lines[current_line]):
+                    logging.info("Processing annotation found on line " + str(current_line))
+                    self.process_explicit_annotation(current_line)
+            current_line += 1
+        # TODO preserve line breaks better
+        self.module = cst.parse_module("\n".join(self.lines))
+        self.lines = []
+
+    def debloat_implicit(self):
+        """Debloat implicit annotations"""
+        modified = self.module.visit(PythonImplicitDebloater(self.target_features))
+        self.module = modified
+
     def debloat(self):
         """
-        Iterates through the file and debloats the selected features subject to dependency constraints
+        Debloats file based on target features
+
+        Note: This first debloats explicit annotations, than makes a second pass debloating implicit annotations.
         :return: None
         """
         logging.info(f"Beginning debloating pass on {self.location}")
-        modified = self.module.visit(PythonImplicitDebloater(self.target_features))
-        self.module = modified
+        self.debloat_explicit()
+        self.debloat_implicit()
