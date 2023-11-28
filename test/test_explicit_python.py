@@ -19,8 +19,6 @@ a = 2
 a = 1
 ### Segment Debloated.
 
-
-
 a = 2
     """
     debloater = PythonResourceDebloater(location="dummy", target_features={"Variant_A"})
@@ -42,8 +40,42 @@ a = 2
     expected = \
     """### File Debloated.
 
-
 """
+    debloater = PythonResourceDebloater(location="dummy", target_features={"Variant_A"})
+    debloater.module = cst.parse_module(input)
+    debloater.debloat_explicit()
+    assert debloater.module.code == expected
+
+def test_explicit_python_replacement():
+    input = \
+    """
+a = 1
+if a == 2:
+    print("a is 2")
+else:
+    ###[Variant_A]~
+    ###^
+    ###a = 0
+    ###b = 1
+    ###^
+    print(f"a is {a}")
+    ###~
+a = 2
+    """
+    expected = \
+    """
+a = 1
+if a == 2:
+    print("a is 2")
+else:
+### Segment Debloated.
+
+### Code Inserted:
+    a = 0
+    b = 1
+
+a = 2
+    """
     debloater = PythonResourceDebloater(location="dummy", target_features={"Variant_A"})
     debloater.module = cst.parse_module(input)
     debloater.debloat_explicit()

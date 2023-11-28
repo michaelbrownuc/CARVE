@@ -66,7 +66,7 @@ class PythonResourceDebloater(ResourceDebloater):
 
     def debloat_explicit(self):
         """Debloat explicit annotations"""
-        self.lines = self.module.code.split("\n")
+        self.lines = self.module.code.splitlines(keepends=True)
         # Search the source code for explicit debloater annotations and process them.
         current_line = 0
         while current_line < len(self.lines):
@@ -74,8 +74,7 @@ class PythonResourceDebloater(ResourceDebloater):
                     logging.info("Processing annotation found on line " + str(current_line))
                     self.process_explicit_annotation(current_line)
             current_line += 1
-        # TODO preserve line breaks better
-        self.module = cst.parse_module("\n".join(self.lines))
+        self.module = cst.parse_module("".join(self.lines))
         self.lines = []
 
     def debloat_implicit(self):

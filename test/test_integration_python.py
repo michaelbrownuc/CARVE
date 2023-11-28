@@ -21,8 +21,6 @@ a = 1
 # If Statement Debloated
 ### Segment Debloated.
 
-
-
 a = 2
     """
     debloater = PythonResourceDebloater(location="dummy",target_features={"Variant_A", "Variant_B", "Variant_C"})
