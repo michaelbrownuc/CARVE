@@ -337,3 +337,27 @@ if (a > 0):
     module = cst.parse_module(input)
     modified = module.visit(PythonImplicitDebloater(features={"Variant_A"}))
     assert modified.code == expected
+
+def test_if_multine():
+    input = \
+    """
+a = 1
+###[Variant_A]
+if a == 2 \\
+    and a == 3:
+    print("a is 2 or 3")
+else:
+    print(f"a is {a}")
+    """
+    expected = \
+    """
+a = 1
+if a == 2 \\
+    and a == 3:
+    ### If Statement Branch Debloated
+else:
+    print(f"a is {a}")
+    """
+    module = cst.parse_module(input)
+    modified = module.visit(PythonImplicitDebloater(features={"Variant_A"}))
+    assert modified.code == expected
