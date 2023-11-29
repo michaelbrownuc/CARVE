@@ -268,3 +268,72 @@ a += 1
     module = cst.parse_module(input)
     modified = module.visit(PythonImplicitDebloater(features={"Variant_A"}))
     assert modified.code == expected
+
+def test_preserve_indents_function():
+    input = \
+"""
+if (a > 0):
+    if (b == 1):
+        ###[Variant_A]
+        def closure(c):
+            return c + a
+"""
+    expected = \
+"""
+if (a > 0):
+    if (b == 1):
+        # Function Debloated
+
+"""
+    module = cst.parse_module(input)
+    modified = module.visit(PythonImplicitDebloater(features={"Variant_A"}))
+    assert modified.code == expected
+
+def test_preserve_indents_statement():
+    input = \
+"""
+if (a > 0):
+    if (b == 1):
+        ###[Variant_A]
+        return c + a
+"""
+    expected = \
+"""
+if (a > 0):
+    if (b == 1):
+        # Statement Debloated
+
+"""
+    module = cst.parse_module(input)
+    modified = module.visit(PythonImplicitDebloater(features={"Variant_A"}))
+    assert modified.code == expected
+
+def test_preserve_indents_if():
+    input = \
+"""
+if (a > 0):
+    if (b == 1):
+        ###[Variant_A]
+        if(a==b):
+            print("a equals b")
+        ###[Variant_A]
+        else:
+            print("a doesn't equal b")
+        ###[Variant_A]
+        if(a<b):
+            print("a less than b")
+"""
+    expected = \
+"""
+if (a > 0):
+    if (b == 1):
+        if(a==b):
+            # If Statement Branch Debloated
+        else:
+            # Else Statement Debloated
+        # If Statement Debloated
+
+"""
+    module = cst.parse_module(input)
+    modified = module.visit(PythonImplicitDebloater(features={"Variant_A"}))
+    assert modified.code == expected
