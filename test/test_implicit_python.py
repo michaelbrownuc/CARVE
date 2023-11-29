@@ -16,7 +16,6 @@ else:
     expected = \
     """
 a = 1
-###[Variant_A]
 if a == 2:
     # If Statement Branch Debloated
 else:
@@ -39,6 +38,7 @@ a = 2
     """
 a = 1
 # If Statement Debloated
+
 a = 2
     """
     module = cst.parse_module(input)
@@ -60,7 +60,6 @@ else:
 a = 1
 if a == 2:
     print("a is 2")
-###[Variant_A]
 else:
     # Else Statement Debloated
     """
@@ -82,6 +81,7 @@ a = 2
     """
 a = 1
 # Function Debloated
+
 a = 2
     """
     module = cst.parse_module(input)
@@ -104,6 +104,7 @@ print("hello world")
 a = 1
 a += 1
 # Statement Debloated
+
     """
     module = cst.parse_module(input)
     modified = module.visit(PythonImplicitDebloater(features={"Variant_A"}))
@@ -166,6 +167,7 @@ a = 2
     """
 a = 1
 # Function Debloated
+
 a = 2
     """
     module = cst.parse_module(input)
@@ -213,6 +215,55 @@ def func(a):
     a += 1
     print(a)
 a = 2
+    """
+    module = cst.parse_module(input)
+    modified = module.visit(PythonImplicitDebloater(features={"Variant_A"}))
+    assert modified.code == expected
+
+def test_if_no_else_leading_comment():
+    input = \
+    """
+a = 1
+# keep this comment
+# and this comment
+###[Variant_A]
+if a == 2:
+    print("a is 2")
+a = 2
+    """
+    expected = \
+    """
+a = 1
+# keep this comment
+# and this comment
+# If Statement Debloated
+
+a = 2
+    """
+    module = cst.parse_module(input)
+    modified = module.visit(PythonImplicitDebloater(features={"Variant_A"}))
+    assert modified.code == expected
+
+def test_single_statement_leading_comment():
+    input = \
+    """
+print("hello world")
+a = 1
+a += 1
+# keep this comment
+# and this comment
+###[Variant_A]
+print(f"a is {a}")
+    """
+    expected = \
+    """
+print("hello world")
+a = 1
+a += 1
+# keep this comment
+# and this comment
+# Statement Debloated
+
     """
     module = cst.parse_module(input)
     modified = module.visit(PythonImplicitDebloater(features={"Variant_A"}))
