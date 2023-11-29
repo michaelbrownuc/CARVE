@@ -44,8 +44,8 @@ class PythonImplicitDebloater(cst.CSTTransformer):
 
     def leave_FunctionDef(self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef) -> cst.FunctionDef:
         """Debloat function if there is an implicit annotation directly before"""
-        if len(original_node.leading_lines) > 0:
-            last_line = original_node.leading_lines[-1]
+        if len(updated_node.leading_lines) > 0:
+            last_line = updated_node.leading_lines[-1]
             if m.matches(last_line, m.EmptyLine(comment=m.Comment(m.MatchIfTrue(self.debloat_comment)))):
                 new_leading_lines = updated_node.leading_lines[:-1]
                 return cst.SimpleStatementLine(leading_lines=new_leading_lines, body=[EmptyLineStatement(indent=False, comment=cst.Comment(f"{self.annotation_sequence} Function Debloated"), newline=cst.Newline())])
@@ -56,13 +56,13 @@ class PythonImplicitDebloater(cst.CSTTransformer):
 
         Debloat entire If statement if there is no else, otherwise just debloat branch body
         """
-        if len(original_node.leading_lines) > 0:
-            last_line = original_node.leading_lines[-1]
+        if len(updated_node.leading_lines) > 0:
+            last_line = updated_node.leading_lines[-1]
             if m.matches(last_line, m.EmptyLine(comment=m.Comment(m.MatchIfTrue(self.debloat_comment)))):
                 indent = last_line.indent
                 new_leading_lines = updated_node.leading_lines[:-1]
                 # debloat entire statement if there is no else branch
-                if original_node.orelse is None:
+                if updated_node.orelse is None:
                     return cst.SimpleStatementLine(leading_lines=new_leading_lines, body=[EmptyLineStatement(indent=False, comment=cst.Comment(f"{self.annotation_sequence} If Statement Debloated"), newline=cst.Newline())])
                 else:
                     modified_node = updated_node.with_deep_changes(updated_node.body, body=[cst.EmptyLine(indent=indent, comment=cst.Comment(f"{self.annotation_sequence} If Statement Branch Debloated"), newline=cst.Newline())])
@@ -73,8 +73,8 @@ class PythonImplicitDebloater(cst.CSTTransformer):
 
     def leave_Else(self, original_node: cst.Else, updated_node: cst.Else) -> cst.Else:
         """Debloat Else statement"""
-        if len(original_node.leading_lines) > 0:
-            last_line = original_node.leading_lines[-1]
+        if len(updated_node.leading_lines) > 0:
+            last_line = updated_node.leading_lines[-1]
             if m.matches(last_line, m.EmptyLine(comment=m.Comment(m.MatchIfTrue(self.debloat_comment)))):
                 indent = last_line.indent
                 new_leading_lines = updated_node.leading_lines[:-1]
@@ -85,8 +85,8 @@ class PythonImplicitDebloater(cst.CSTTransformer):
 
     def leave_SimpleStatementLine(self, original_node: cst.SimpleStatementLine, updated_node: cst.SimpleStatementLine) -> cst.SimpleStatementLine:
         """Debloat single statement"""
-        if len(original_node.leading_lines) > 0:
-            last_line = original_node.leading_lines[-1]
+        if len(updated_node.leading_lines) > 0:
+            last_line = updated_node.leading_lines[-1]
             if m.matches(last_line, m.EmptyLine(comment=m.Comment(m.MatchIfTrue(self.debloat_comment)))):
                 new_leading_lines = updated_node.leading_lines[:-1]
                 return updated_node.with_changes(body=[EmptyLineStatement(indent=False, comment=cst.Comment(f"{self.annotation_sequence} Statement Debloated"), newline=cst.Newline())], leading_lines=new_leading_lines)
@@ -98,15 +98,15 @@ class PythonImplicitDebloater(cst.CSTTransformer):
         This function is necessary because libcst stores the leading comments in a module in the module.header field, not the
         node.leading_lines field as usual. If the very first statement is annotated, then this method will debloat it.
         """
-        if len(original_node.header) > 0:
-            last_line = original_node.header[-1]
+        if len(updated_node.header) > 0:
+            last_line = updated_node.header[-1]
             if m.matches(last_line, m.EmptyLine(comment=m.Comment(m.MatchIfTrue(self.debloat_comment)))):
                 indent = last_line.indent
                 # remove first statement and last line of header (annotation comment)
                 comment_line = cst.EmptyLine(indent=indent, comment=cst.Comment(f"{self.annotation_sequence} Statement Debloated"), newline=cst.Newline())
-                modified_body = list(original_node.body[1:])
+                modified_body = list(updated_node.body[1:])
                 modified_body.insert(0, comment_line)
-                modified_header = original_node.header[:-1]
+                modified_header = updated_node.header[:-1]
                 modified_node = updated_node.with_changes(body=modified_body, header=modified_header)
                 return modified_node
         return updated_node
