@@ -8,6 +8,7 @@ import libcst.matchers as m
 from typing import Set, Union
 from carve.resource_debloater.ResourceDebloater import ResourceDebloater
 from libcst._nodes.internal import CodegenState
+import logging
 
 class EmptyLineStatement(cst.EmptyLine):
     """Modified EmptyLine node to be compatible with SimpleStatementLine."""
@@ -89,20 +90,14 @@ class PythonImplicitDebloater(cst.CSTTransformer):
             return updated_node.with_changes(body=[EmptyLineStatement(indent=False, comment=cst.Comment(f"{self.annotation_sequence} Statement Debloated"), newline=cst.Newline())], leading_lines=new_leading_lines)
         return updated_node
 
-    def leave_Module(self, original_node: cst.Module, updated_node: cst.Module) -> cst.Module:
-        """Debloat first statement in Module
+    def visit_Module(self, original_node: cst.Module):
+        """Warn if there are any annotations at the beginning of module
 
-        This function is necessary because libcst stores the leading comments in a module in the module.header field, not the
-        node.leading_lines field as usual. If the very first statement is annotated, then this method will debloat it.
+        The Python debloater will ignore implicit annotations that are at the beginning of a file
+        (before any line that isn't whitespace/comments). This is due to how the Python parser under
+        the hood groups these comments with the module itself.
         """
-        if len(updated_node.header) > 0:
-            last_line = updated_node.header[-1]
-            if m.matches(last_line, m.EmptyLine(comment=m.Comment(m.MatchIfTrue(self.debloat_comment)))):
-                # remove first statement and last line of header (annotation comment)
-                comment_line = cst.EmptyLine(comment=cst.Comment(f"{self.annotation_sequence} Statement Debloated"), newline=cst.Newline())
-                modified_body = list(updated_node.body[1:])
-                modified_body.insert(0, comment_line)
-                modified_header = updated_node.header[:-1]
-                modified_node = updated_node.with_changes(body=modified_body, header=modified_header)
-                return modified_node
-        return updated_node
+        for line in original_node.header:
+            if m.matches(line, m.EmptyLine(comment=m.Comment(m.MatchIfTrue(self.debloat_comment)))):
+                logging.warning(f"Ignoring implicit annotation in header: {line.comment.value}")
+        return original_node

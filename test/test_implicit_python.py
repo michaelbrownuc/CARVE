@@ -112,8 +112,10 @@ a += 1
 
 
 def test_leading_statement():
+    """CARVE will ignore leading implicit annotations"""
     input = \
     """
+
 ###[Variant_A]
 def func(a):
     a += 1
@@ -122,7 +124,11 @@ a = 2
     """
     expected = \
     """
-### Statement Debloated
+
+###[Variant_A]
+def func(a):
+    a += 1
+    print(a)
 a = 2
     """
     module = cst.parse_module(input)
