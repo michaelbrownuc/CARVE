@@ -18,7 +18,7 @@ a = 2
     expected = \
     """
 a = 1
-# If Statement Debloated
+### If Statement Debloated
 
 ### Segment Debloated.
 

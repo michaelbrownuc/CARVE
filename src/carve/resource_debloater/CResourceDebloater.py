@@ -36,7 +36,7 @@ class CResourceDebloater(ResourceDebloater):
         super(CResourceDebloater, self).__init__(location, target_features)
         
         # If you desire to use a different mapping sequence, it can be adjusted here.
-        self.annotation_sequence = "///"
+        self.annotation_sequence = self.C_ANNOTATION_SEQUENCE
 
     @staticmethod
     def get_construct(line):

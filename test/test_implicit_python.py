@@ -17,7 +17,7 @@ else:
     """
 a = 1
 if a == 2:
-    # If Statement Branch Debloated
+    ### If Statement Branch Debloated
 else:
     print(f"a is {a}")
     """
@@ -37,7 +37,7 @@ a = 2
     expected = \
     """
 a = 1
-# If Statement Debloated
+### If Statement Debloated
 
 a = 2
     """
@@ -61,7 +61,7 @@ a = 1
 if a == 2:
     print("a is 2")
 else:
-    # Else Statement Debloated
+    ### Else Statement Debloated
     """
     module = cst.parse_module(input)
     modified = module.visit(PythonImplicitDebloater(features={"Variant_A"}))
@@ -80,7 +80,7 @@ a = 2
     expected = \
     """
 a = 1
-# Function Debloated
+### Function Debloated
 
 a = 2
     """
@@ -103,7 +103,7 @@ print(f"a is {a}")
 print("hello world")
 a = 1
 a += 1
-# Statement Debloated
+### Statement Debloated
 
     """
     module = cst.parse_module(input)
@@ -122,7 +122,7 @@ a = 2
     """
     expected = \
     """
-# Statement Debloated
+### Statement Debloated
 a = 2
     """
     module = cst.parse_module(input)
@@ -166,7 +166,7 @@ a = 2
     expected = \
     """
 a = 1
-# Function Debloated
+### Function Debloated
 
 a = 2
     """
@@ -236,7 +236,7 @@ a = 2
 a = 1
 # keep this comment
 # and this comment
-# If Statement Debloated
+### If Statement Debloated
 
 a = 2
     """
@@ -262,7 +262,7 @@ a = 1
 a += 1
 # keep this comment
 # and this comment
-# Statement Debloated
+### Statement Debloated
 
     """
     module = cst.parse_module(input)
@@ -282,7 +282,7 @@ if (a > 0):
 """
 if (a > 0):
     if (b == 1):
-        # Function Debloated
+        ### Function Debloated
 
 """
     module = cst.parse_module(input)
@@ -301,7 +301,7 @@ if (a > 0):
 """
 if (a > 0):
     if (b == 1):
-        # Statement Debloated
+        ### Statement Debloated
 
 """
     module = cst.parse_module(input)
@@ -328,10 +328,10 @@ if (a > 0):
 if (a > 0):
     if (b == 1):
         if(a==b):
-            # If Statement Branch Debloated
+            ### If Statement Branch Debloated
         else:
-            # Else Statement Debloated
-        # If Statement Debloated
+            ### Else Statement Debloated
+        ### If Statement Debloated
 
 """
     module = cst.parse_module(input)

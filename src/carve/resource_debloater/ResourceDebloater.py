@@ -20,6 +20,8 @@ class ResourceDebloater(object):
     debloaters that can be instantiated in this project.  It provides the basic interface necessary for instantiating a
     resource debloater and handles common tasks such as reading the file from disk into a data structure.
     """
+    PYTHON_ANNOTATION_SEQUENCE = "###"
+    C_ANNOTATION_SEQUENCE = "///"
 
     def __init__(self, location: Path, target_features: Set[str]):
         """

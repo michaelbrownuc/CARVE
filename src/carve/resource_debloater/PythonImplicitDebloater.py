@@ -30,13 +30,13 @@ class PythonImplicitDebloater(cst.CSTTransformer):
     """Transformer for debloating Python code with implicit annotations"""
     def __init__(self, features: Set[str]):
         self.features = features
+        self.annotation_sequence = ResourceDebloater.PYTHON_ANNOTATION_SEQUENCE
 
 
     def debloat_comment(self, comment_str: str) -> bool:
         """Return whether the comment is an implicit annotation with valid features"""
-        # TODO deduplicate this and/or parameterize regex pattern?
         # determine if implicit annotation
-        if re.search(r"^\s*###\[.*\]\s*$", comment_str) is not None:
+        if re.search(f"^\\s*{self.annotation_sequence}\\[.*\\]\\s*$", comment_str) is not None:
             comment_features = ResourceDebloater.get_features(comment_str)
             # debloat if features in comment are subset of target debloated features
             return self.features.issuperset(comment_features)
@@ -48,7 +48,7 @@ class PythonImplicitDebloater(cst.CSTTransformer):
             last_line = original_node.leading_lines[-1]
             if m.matches(last_line, m.EmptyLine(comment=m.Comment(m.MatchIfTrue(self.debloat_comment)))):
                 new_leading_lines = updated_node.leading_lines[:-1]
-                return cst.SimpleStatementLine(leading_lines=new_leading_lines, body=[EmptyLineStatement(indent=False, comment=cst.Comment("# Function Debloated"), newline=cst.Newline())])
+                return cst.SimpleStatementLine(leading_lines=new_leading_lines, body=[EmptyLineStatement(indent=False, comment=cst.Comment(f"{self.annotation_sequence} Function Debloated"), newline=cst.Newline())])
         return updated_node
 
     def leave_If(self, original_node: cst.If, updated_node: cst.If) -> cst.If:
@@ -63,10 +63,9 @@ class PythonImplicitDebloater(cst.CSTTransformer):
                 new_leading_lines = updated_node.leading_lines[:-1]
                 # debloat entire statement if there is no else branch
                 if original_node.orelse is None:
-                    return cst.SimpleStatementLine(leading_lines=new_leading_lines, body=[EmptyLineStatement(indent=False, comment=cst.Comment("# If Statement Debloated"), newline=cst.Newline())])
+                    return cst.SimpleStatementLine(leading_lines=new_leading_lines, body=[EmptyLineStatement(indent=False, comment=cst.Comment(f"{self.annotation_sequence} If Statement Debloated"), newline=cst.Newline())])
                 else:
-                    # TODO fix indentation of replacement code
-                    modified_node = updated_node.with_deep_changes(updated_node.body, body=[cst.EmptyLine(indent=indent, comment=cst.Comment("# If Statement Branch Debloated"), newline=cst.Newline())])
+                    modified_node = updated_node.with_deep_changes(updated_node.body, body=[cst.EmptyLine(indent=indent, comment=cst.Comment(f"{self.annotation_sequence} If Statement Branch Debloated"), newline=cst.Newline())])
                     modified_node = modified_node.with_changes(leading_lines=new_leading_lines)
                     return modified_node
 
@@ -79,8 +78,7 @@ class PythonImplicitDebloater(cst.CSTTransformer):
             if m.matches(last_line, m.EmptyLine(comment=m.Comment(m.MatchIfTrue(self.debloat_comment)))):
                 indent = last_line.indent
                 new_leading_lines = updated_node.leading_lines[:-1]
-                # TODO fix indentation of replacement code
-                modified_node = updated_node.with_deep_changes(updated_node.body, body=[cst.EmptyLine(indent=indent, comment=cst.Comment("# Else Statement Debloated"), newline=cst.Newline())])
+                modified_node = updated_node.with_deep_changes(updated_node.body, body=[cst.EmptyLine(indent=indent, comment=cst.Comment(f"{self.annotation_sequence} Else Statement Debloated"), newline=cst.Newline())])
                 modified_node = modified_node.with_changes(leading_lines=new_leading_lines)
                 return modified_node
         return updated_node
@@ -91,7 +89,7 @@ class PythonImplicitDebloater(cst.CSTTransformer):
             last_line = original_node.leading_lines[-1]
             if m.matches(last_line, m.EmptyLine(comment=m.Comment(m.MatchIfTrue(self.debloat_comment)))):
                 new_leading_lines = updated_node.leading_lines[:-1]
-                return updated_node.with_changes(body=[EmptyLineStatement(indent=False, comment=cst.Comment("# Statement Debloated"), newline=cst.Newline())], leading_lines=new_leading_lines)
+                return updated_node.with_changes(body=[EmptyLineStatement(indent=False, comment=cst.Comment(f"{self.annotation_sequence} Statement Debloated"), newline=cst.Newline())], leading_lines=new_leading_lines)
         return updated_node
 
     def leave_Module(self, original_node: cst.Module, updated_node: cst.Module) -> cst.Module:
@@ -105,7 +103,7 @@ class PythonImplicitDebloater(cst.CSTTransformer):
             if m.matches(last_line, m.EmptyLine(comment=m.Comment(m.MatchIfTrue(self.debloat_comment)))):
                 indent = last_line.indent
                 # remove first statement and last line of header (annotation comment)
-                comment_line = cst.EmptyLine(indent=indent, comment=cst.Comment("# Statement Debloated"), newline=cst.Newline())
+                comment_line = cst.EmptyLine(indent=indent, comment=cst.Comment(f"{self.annotation_sequence} Statement Debloated"), newline=cst.Newline())
                 modified_body = list(original_node.body[1:])
                 modified_body.insert(0, comment_line)
                 modified_header = original_node.header[:-1]

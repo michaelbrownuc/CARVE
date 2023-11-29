@@ -28,7 +28,7 @@ class PythonResourceDebloater(ResourceDebloater):
         super(PythonResourceDebloater, self).__init__(location, target_features)
 
         # If you desire to use a different mapping sequence, it can be adjusted here.
-        self.annotation_sequence = "###"
+        self.annotation_sequence = self.PYTHON_ANNOTATION_SEQUENCE
         self.module = None
 
     def process_annotation(self, annotation_line):
