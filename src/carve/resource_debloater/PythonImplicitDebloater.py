@@ -101,3 +101,9 @@ class PythonImplicitDebloater(cst.CSTTransformer):
             if m.matches(line, m.EmptyLine(comment=m.Comment(m.MatchIfTrue(self.debloat_comment)))):
                 logging.warning(f"Ignoring implicit annotation in header: {line.comment.value}")
         return original_node
+
+    def leave_ClassDef(self, original_node: cst.ClassDef, updated_node: cst.ClassDef):
+        """Debloat Class definition"""
+        if self.node_is_annotated(updated_node):
+            new_leading_lines = updated_node.leading_lines[:-1]
+            return cst.SimpleStatementLine(leading_lines=new_leading_lines, body=[EmptyLineStatement(indent=False, comment=cst.Comment(f"{self.annotation_sequence} Class Definition Debloated"), newline=cst.Newline())])

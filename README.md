@@ -21,6 +21,7 @@ And for Python, CARVE supports implicit mappings of:
  1. If / Else conditional branching constructs
  2. Function definitions
  3. Single statements
+ 4. Class Definitions
  
 CARVE takes as input a configuration file specifying the following pieces of information:
 

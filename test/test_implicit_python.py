@@ -367,3 +367,29 @@ else:
     module = cst.parse_module(input)
     modified = module.visit(PythonImplicitDebloater(features={"Variant_A"}))
     assert modified.code == expected
+
+def test_class():
+    input = \
+    """
+def main():
+    ###[Variant_A]
+    class MyClass(BaseClass):
+        var1 = "a"
+        var2 = "b"
+        def __init__(self, var3):
+            self.var3 = var3
+
+        def print_var3(self):
+            print(f"var3: {self.var3}")
+main()
+    """
+    expected = \
+    """
+def main():
+    ### Class Definition Debloated
+
+main()
+    """
+    module = cst.parse_module(input)
+    modified = module.visit(PythonImplicitDebloater(features={"Variant_A"}))
+    assert modified.code == expected
