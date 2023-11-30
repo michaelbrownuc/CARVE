@@ -107,3 +107,4 @@ class PythonImplicitDebloater(cst.CSTTransformer):
         if self.node_is_annotated(updated_node):
             new_leading_lines = updated_node.leading_lines[:-1]
             return cst.SimpleStatementLine(leading_lines=new_leading_lines, body=[EmptyLineStatement(indent=False, comment=cst.Comment(f"{self.annotation_sequence} Class Definition Debloated"), newline=cst.Newline())])
+        return updated_node
