@@ -92,8 +92,15 @@ class CResourceDebloater(ResourceDebloater):
         is_explicit_annotation = last_char in {"~", "!"}
         if is_explicit_annotation:
             self.process_explicit_annotation(annotation_line)
-        # If not explicit, look at next line to determine the implicit cue
         else:
+            self.process_implicit_annotation(annotation_line)
+
+
+    def process_implicit_annotation(self, annotation_line: int) -> None:
+            """Processes an implicit annotation
+
+            See the docstring of process_annotation for description of annotation limitations."""
+            # Look at next line to determine the implicit construct
             construct_line = annotation_line + 1
             construct = CResourceDebloater.get_construct(self.lines[construct_line])
 
