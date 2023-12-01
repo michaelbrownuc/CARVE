@@ -1,4 +1,4 @@
-"""Integrations tests for Python debloating"""
+"""Integration tests for Python debloating"""
 from carve.resource_debloater.PythonResourceDebloater import PythonResourceDebloater
 import libcst as cst
 def test_if_integration():

@@ -63,7 +63,7 @@ return ret * temp;
 ```
 instructs CARVE to remove the three lines of code between the mapping and the termination tag, and replace it with the single line of code `return 0;`.
 
-### Implict Feature Mappings
+### Implicit Feature Mappings
 Implicit mappings instruct the debloater to analyze the code following the mapping to determine its structure, and by extension what code should be removed. Implicit mappings obviate the need to handle predictable control-flow implications associated with certain types of code constructs by using explicit mappings with replacement code. Feature mappings that do not have an operator appended to them are considered implicit mappings by CARVE.
 
 ### Limitations
@@ -85,3 +85,6 @@ python3 -m carve --log_level [level] [path to config file]
 
 python3 -m carve sample/debloat-config.yaml
 ```
+
+## Testing
+CARVE has tests in `test/`. Install CARVE in developer mode `pip install -e ".[dev]"` and run `pytest test`.
