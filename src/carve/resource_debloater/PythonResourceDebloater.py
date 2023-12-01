@@ -31,14 +31,6 @@ class PythonResourceDebloater(ResourceDebloater):
         self.annotation_sequence = self.PYTHON_ANNOTATION_SEQUENCE
         self.module = None
 
-    def process_annotation(self, annotation_line):
-        """
-        Processes an implicit or explicit (! and ~) debloating operation annotated at the specified line.
-        :param int annotation_line: Line where annotation to be processed is located.
-        :return: None
-        """
-        raise NotImplementedError
-
     def read_from_disk(self):
         """
         Reads the file from disk and parses a Concrete Syntax Tree
