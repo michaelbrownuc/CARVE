@@ -176,7 +176,6 @@ class CResourceDebloater(ResourceDebloater):
                     # Need this in case the braces aren't on their own line.
                     # Remove lines in bedtween the open and close curly brace.
                     block_end -= 1
-                    open_brace_line += 1
                     while block_end != open_brace_line:
                         self.lines.pop(block_end)
                         block_end -= 1
