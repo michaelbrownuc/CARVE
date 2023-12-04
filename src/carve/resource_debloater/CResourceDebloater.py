@@ -52,15 +52,15 @@ class CResourceDebloater(ResourceDebloater):
         :return:
         """
         
-        if re.search("case\s\s*\w\w*\s*:\w*", line.strip()) is not None:
+        if re.search(r"case\s\s*\w\w*\s*:\w*", line.strip()) is not None:
             return "Case"
-        elif re.search("\selse\s\s*if\s*(\s*\S*\s*)", " " + line.strip()) is not None:
+        elif re.search(r"\selse\s\s*if\s*(\s*\S*\s*)", " " + line.strip()) is not None:
             return "ElseIfBranch"
-        elif re.search("\sif\s*(\s*\S*\s*)", " " + line.strip()) is not None:
+        elif re.search(r"\sif\s*(\s*\S*\s*)", " " + line.strip()) is not None:
             return "IfBranch"
-        elif re.search("\selse\s*{*", " " + line.strip()) is not None:
+        elif re.search(r"\selse\s*{*", " " + line.strip()) is not None:
             return "ElseBranch"
-        elif re.search("\w\w*\s\s*\w\w*\s*(\s*\S*\s*)\s*{*", line.strip()) is not None:
+        elif re.search(r"\w\w*\s\s*\w\w*\s*(\s*\S*\s*)\s*{*", line.strip()) is not None:
             return "FunctionStructDefinition"
         else:
             return "Statement"
@@ -192,11 +192,11 @@ class CResourceDebloater(ResourceDebloater):
                 previous_break = None
 
                 while search_line >= 0:
-                    if re.search("\sbreak\s*;", " " + self.lines[search_line].strip()) is not None or \
-                       re.search("\sswitch\s*(\s*\S*\s*)\s*{*", " " + self.lines[search_line].strip()) is not None:
+                    if re.search(r"\sbreak\s*;", " " + self.lines[search_line].strip()) is not None or \
+                       re.search(r"\sswitch\s*(\s*\S*\s*)\s*{*", " " + self.lines[search_line].strip()) is not None:
                         previous_break = True
                         break
-                    elif re.search("case\s\s*\w\w*\s*:\w*", self.lines[search_line].strip()) is not None:
+                    elif re.search(r"case\s\s*\w\w*\s*:\w*", self.lines[search_line].strip()) is not None:
                         previous_break = False
                         break
                     else:
@@ -224,8 +224,8 @@ class CResourceDebloater(ResourceDebloater):
                         brace_count += self.lines[search_line].count("{")
                         brace_count -= self.lines[search_line].count("}")
 
-                        if re.search("case\s\s*\w\w*\s*:\w*", self.lines[search_line].strip()) is not None or \
-                           re.search("default\s\s*\w\w*\s*:\w*", self.lines[search_line].strip()) is not None or \
+                        if re.search(r"case\s\s*\w\w*\s*:\w*", self.lines[search_line].strip()) is not None or \
+                           re.search(r"default\s\s*\w\w*\s*:\w*", self.lines[search_line].strip()) is not None or \
                            brace_count < 0:
                             case_end = search_line - 1
 
@@ -233,7 +233,7 @@ class CResourceDebloater(ResourceDebloater):
                             if self.lines[case_end].find(f"{self.annotation_sequence}[") > -1:
                                 case_end -= 1
                             break
-                        elif re.search("\sbreak\s*;", " " + self.lines[search_line].strip()) is not None:
+                        elif re.search(r"\sbreak\s*;", " " + self.lines[search_line].strip()) is not None:
                             case_end = search_line
                             break
                         else:
