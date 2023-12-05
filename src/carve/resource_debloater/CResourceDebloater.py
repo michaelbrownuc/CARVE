@@ -70,19 +70,8 @@ class CResourceDebloater(ResourceDebloater):
         Processes an implicit or explicit (! and ~) debloating operation annotated at the specified line.
 
         This debloating module operates largely on a line by line basis. It does NOT support all types of source code
-        authoring styles. Many code authoring styles are not supported and will cause errors in debloating.
-
-        Not Supported: Implicit annotations must be immediately preceding the construct to debloat.  There cannot
-        be empty lines, comments, or block comments between the annotation and the construct.
-
-        Not Supported: This processor assumes that all single statement debloating operations can remove the line
-        wholesale. Multi-line statements will not be completely debloated.
-
-        Not Supported: This processor assumes all execution branch statements have the entire condition expressed on
-        the same line as the keyword.
-
-        Not Supported: This processor expects all branches to be enclosed in braces, single statement blocks will cause
-        errors.
+        authoring styles. Many code authoring styles are not supported and will cause errors in debloating. Specifically,
+        the implicit module is style-sensitive. See the documentation of process_implicit_annotation for more.
 
         :param int annotation_line: Line where annotation to be processed is located.
         :return: None
@@ -99,7 +88,45 @@ class CResourceDebloater(ResourceDebloater):
     def process_implicit_annotation(self, annotation_line: int) -> None:
             """Processes an implicit annotation
 
-            See the docstring of process_annotation for description of annotation limitations."""
+            The C implicit annotation processor expects a particular style. This is a list of what is not supported,
+            although it is not exhaustive:
+
+            Not Supported: Implicit annotations must be immediately preceding the construct to debloat. There cannot
+            be empty lines, comments, or block comments between the annotation and the construct.
+
+            Not Supported: This processor assumes that all single-statement debloating operations can remove the line
+            wholesale. Multi-line statements will not be completely debloated.
+
+            Not Supported: This processor assumes all execution branch statements have the entire condition expressed on
+            the same line as the keyword.
+
+            Not Supported: This processor expects all branches to be enclosed in braces. Single-statement blocks will cause
+            errors.
+
+            Not Supported: This processor expects annotations which only debloat the body of a construct (`if`, `else if`)
+            to have the construct and body statements on separate lines. This annotation is invalid:
+            ```
+            ///[Variant_A]
+            if (condition == 1) { fprintf(stderr, "Condition is one.\\n"); }
+            ```
+            Not Supported: Implicit annotations which are inside the braces of the previous statement. This annotation is invalid:
+            ```
+            if (condition == 1) {
+                fprintf(stderr, "Condition is one.\\n");
+            ///[Variant_A]
+            } else if (condition == 1) {
+                fprintf(stderr, "Condition is two.\\n");
+            }
+            ```
+            Not Supported: Struct typedefs cannot extend past the line of the last brace. This annotation is invalid:
+            ```
+            typedef struct _mystruct
+            {
+            int field_a;
+            }
+            mystruct;
+            ```
+            """
             # Look at next line to determine the implicit construct
             construct_line = annotation_line + 1
             construct = CResourceDebloater.get_construct(self.lines[construct_line])

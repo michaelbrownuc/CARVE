@@ -220,3 +220,100 @@ static int _modbus_tcp_select(modbus_t *ctx, fd_set *rset, struct timeval *tv, i
     debloater.process_implicit_annotation(location)
     output = "".join(debloater.lines)
     assert output == expected
+
+def test_else():
+    input = \
+"""
+if (a == b) {
+    fprintf(stderr, "a equals b\\n");
+}
+///[Variant_A]
+else {
+    return -1;
+}
+"""
+    expected = \
+"""
+if (a == b) {
+    fprintf(stderr, "a equals b\\n");
+}
+/// Code Block Debloated.
+
+"""
+    debloater = CResourceDebloater(location="dummy", target_features={"Variant_A"})
+    debloater.lines = input.splitlines(keepends=True)
+    location = 4
+    debloater.process_implicit_annotation(location)
+    output = "".join(debloater.lines)
+    assert output == expected
+
+def test_else_one_line():
+    input = \
+"""
+if (a == b) {
+    fprintf(stderr, "a equals b\\n");
+}
+///[Variant_A]
+else { return -1; }
+"""
+    expected = \
+"""
+if (a == b) {
+    fprintf(stderr, "a equals b\\n");
+}
+/// Code Block Debloated.
+
+"""
+    debloater = CResourceDebloater(location="dummy", target_features={"Variant_A"})
+    debloater.lines = input.splitlines(keepends=True)
+    location = 4
+    debloater.process_implicit_annotation(location)
+    output = "".join(debloater.lines)
+    assert output == expected
+
+
+def test_struct_typedef():
+    input = \
+"""
+///[Variant_A]
+typedef struct _mystruct {
+    int field_a;
+    int field_b;
+    int field_c;
+} mystruct;
+"""
+    expected = \
+"""
+/// Code Block Debloated.
+
+"""
+    debloater = CResourceDebloater(location="dummy", target_features={"Variant_A"})
+    debloater.lines = input.splitlines(keepends=True)
+    location = 1
+    debloater.process_implicit_annotation(location)
+    output = "".join(debloater.lines)
+    assert output == expected
+
+
+def test_struct_standard():
+    input = \
+"""
+///[Variant_A]
+struct _mystruct
+{
+    int field_a;
+    int field_b;
+    int field_c;
+};
+"""
+    expected = \
+"""
+/// Code Block Debloated.
+
+"""
+    debloater = CResourceDebloater(location="dummy", target_features={"Variant_A"})
+    debloater.lines = input.splitlines(keepends=True)
+    location = 1
+    debloater.process_implicit_annotation(location)
+    output = "".join(debloater.lines)
+    assert output == expected
