@@ -26,6 +26,16 @@ class CResourceDebloater(ResourceDebloater):
             statement
             cases in a switch statement (aware of fall through mechanics)
     """
+    # Regex patterns for identifying constructs
+    CASE_CONSTRUCT_PAT = r"case\s\s*\w\w*\s*:"
+    ELSE_IF_CONSTRUCT_PAT = r"\selse\s\s*if\s*(\s*\S*\s*)"
+    IF_CONSTRUCT_PAT = r"\sif\s*(\s*\S*\s*)"
+    ELSE_CONSTRUCT_PAT = r"\selse\s*{*"
+    FUNC_STRUCT_CONSTRUCT_PAT = r"\w\w*\s\s*\w\w*\s*(\s*\S*\s*)\s*{*"
+    # Other regex patterns
+    BREAK_PAT = r"\sbreak\s*;"
+    SWITCH_PAT = r"\sswitch\s*(\s*\S*\s*)\s*{*"
+    DEFAULT_PAT = r"default\s*:"
 
     def __init__(self, location, target_features):
         """
@@ -52,15 +62,15 @@ class CResourceDebloater(ResourceDebloater):
         :return:
         """
         
-        if re.search(r"case\s\s*\w\w*\s*:", line.strip()) is not None:
+        if re.search(CResourceDebloater.CASE_CONSTRUCT_PAT, line.strip()) is not None:
             return "Case"
-        elif re.search(r"\selse\s\s*if\s*(\s*\S*\s*)", " " + line.strip()) is not None:
+        elif re.search(CResourceDebloater.ELSE_IF_CONSTRUCT_PAT, " " + line.strip()) is not None:
             return "ElseIfBranch"
-        elif re.search(r"\sif\s*(\s*\S*\s*)", " " + line.strip()) is not None:
+        elif re.search(CResourceDebloater.IF_CONSTRUCT_PAT, " " + line.strip()) is not None:
             return "IfBranch"
-        elif re.search(r"\selse\s*{*", " " + line.strip()) is not None:
+        elif re.search(CResourceDebloater.ELSE_CONSTRUCT_PAT, " " + line.strip()) is not None:
             return "ElseBranch"
-        elif re.search(r"\w\w*\s\s*\w\w*\s*(\s*\S*\s*)\s*{*", line.strip()) is not None:
+        elif re.search(CResourceDebloater.FUNC_STRUCT_CONSTRUCT_PAT, line.strip()) is not None:
             return "FunctionStructDefinition"
         else:
             return "Statement"
@@ -218,11 +228,11 @@ class CResourceDebloater(ResourceDebloater):
                 previous_break = None
 
                 while search_line >= 0:
-                    if re.search(r"\sbreak\s*;", " " + self.lines[search_line].strip()) is not None or \
-                       re.search(r"\sswitch\s*(\s*\S*\s*)\s*{*", " " + self.lines[search_line].strip()) is not None:
+                    if re.search(CResourceDebloater.BREAK_PAT, " " + self.lines[search_line].strip()) is not None or \
+                       re.search(CResourceDebloater.SWITCH_PAT, " " + self.lines[search_line].strip()) is not None:
                         previous_break = True
                         break
-                    elif re.search(r"case\s\s*\w\w*\s*:", self.lines[search_line].strip()) is not None:
+                    elif re.search(CResourceDebloater.CASE_CONSTRUCT_PAT, self.lines[search_line].strip()) is not None:
                         previous_break = False
                         break
                     else:
@@ -250,8 +260,8 @@ class CResourceDebloater(ResourceDebloater):
                         brace_count += self.lines[search_line].count("{")
                         brace_count -= self.lines[search_line].count("}")
 
-                        if re.search(r"case\s\s*\w\w*\s*:", self.lines[search_line].strip()) is not None or \
-                           re.search(r"default\s*:", self.lines[search_line].strip()) is not None or \
+                        if re.search(CResourceDebloater.CASE_CONSTRUCT_PAT, self.lines[search_line].strip()) is not None or \
+                           re.search(CResourceDebloater.DEFAULT_PAT, self.lines[search_line].strip()) is not None or \
                            brace_count < 0:
                             case_end = search_line - 1
 
@@ -259,7 +269,7 @@ class CResourceDebloater(ResourceDebloater):
                             if self.lines[case_end].find(f"{self.annotation_sequence}[") > -1:
                                 case_end -= 1
                             break
-                        elif re.search(r"\sbreak\s*;", " " + self.lines[search_line].strip()) is not None:
+                        elif re.search(CResourceDebloater.BREAK_PAT, " " + self.lines[search_line].strip()) is not None:
                             case_end = search_line
                             break
                         else:
