@@ -317,3 +317,168 @@ struct _mystruct
     debloater.process_implicit_annotation(location)
     output = "".join(debloater.lines)
     assert output == expected
+
+def test_case_label():
+    input = \
+"""
+switch (switchval) {
+    case CASE1:
+        break;
+    case CASE2:
+    ///[Variant_A]
+    case CASE3:
+        fprintf(stderr, "case 3\\n");
+        break;
+}
+"""
+    expected = \
+"""
+switch (switchval) {
+    case CASE1:
+        break;
+    case CASE2:
+/// Case Label Debloated.
+
+        fprintf(stderr, "case 3\\n");
+        break;
+}
+"""
+    debloater = CResourceDebloater(location="dummy", target_features={"Variant_A"})
+    debloater.lines = input.splitlines(keepends=True)
+    location = 5
+    debloater.process_implicit_annotation(location)
+    output = "".join(debloater.lines)
+    assert output == expected
+
+
+def test_case_body():
+    input = \
+"""
+switch (switchval) {
+    case CASE1:
+    case CASE2:
+        break;
+    ///[Variant_A]
+    case CASE3:
+        fprintf(stderr, "case 3\\n");
+        break;
+    case CASE4:
+}
+"""
+    expected = \
+"""
+switch (switchval) {
+    case CASE1:
+    case CASE2:
+        break;
+/// Case Block Debloated.
+
+    case CASE4:
+}
+"""
+    debloater = CResourceDebloater(location="dummy", target_features={"Variant_A"})
+    debloater.lines = input.splitlines(keepends=True)
+    location = 5
+    debloater.process_implicit_annotation(location)
+    output = "".join(debloater.lines)
+    assert output == expected
+
+
+def test_case_body_first():
+    input = \
+"""
+switch (switchval) {
+    ///[Variant_A]
+    case CASE1:
+    case CASE2:
+        break;
+    case CASE3:
+        fprintf(stderr, "case 3\\n");
+        break;
+    case CASE4:
+}
+"""
+    expected = \
+"""
+switch (switchval) {
+/// Case Block Debloated.
+
+    case CASE2:
+        break;
+    case CASE3:
+        fprintf(stderr, "case 3\\n");
+        break;
+    case CASE4:
+}
+"""
+    debloater = CResourceDebloater(location="dummy", target_features={"Variant_A"})
+    debloater.lines = input.splitlines(keepends=True)
+    location = 2
+    debloater.process_implicit_annotation(location)
+    output = "".join(debloater.lines)
+    assert output == expected
+
+def test_case_body_last():
+    input = \
+"""
+switch (switchval) {
+    case CASE1:
+    case CASE2:
+        break;
+    case CASE3:
+        fprintf(stderr, "case 3\\n");
+        break;
+    ///[Variant_A]
+    case CASE4:
+}
+"""
+    expected = \
+"""
+switch (switchval) {
+    case CASE1:
+    case CASE2:
+        break;
+    case CASE3:
+        fprintf(stderr, "case 3\\n");
+        break;
+/// Case Block Debloated.
+
+}
+"""
+    debloater = CResourceDebloater(location="dummy", target_features={"Variant_A"})
+    debloater.lines = input.splitlines(keepends=True)
+    location = 8
+    debloater.process_implicit_annotation(location)
+    output = "".join(debloater.lines)
+    assert output == expected
+
+def test_case_body_default():
+    input = \
+"""
+switch (switchval) {
+    case CASE1:
+        break;
+    ///[Variant_A]
+    case CASE2:
+        fprintf(stderr, "case 2\\n");
+    default:
+        fprintf(stderr, "default\\n");
+}
+"""
+    expected = \
+"""
+switch (switchval) {
+    case CASE1:
+        break;
+/// Case Block Debloated.
+
+    default:
+        fprintf(stderr, "default\\n");
+}
+"""
+    debloater = CResourceDebloater(location="dummy", target_features={"Variant_A"})
+    debloater.lines = input.splitlines(keepends=True)
+    location = 4
+    debloater.process_implicit_annotation(location)
+    output = "".join(debloater.lines)
+    assert output == expected

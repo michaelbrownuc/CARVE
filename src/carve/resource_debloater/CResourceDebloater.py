@@ -52,7 +52,7 @@ class CResourceDebloater(ResourceDebloater):
         :return:
         """
         
-        if re.search(r"case\s\s*\w\w*\s*:\w*", line.strip()) is not None:
+        if re.search(r"case\s\s*\w\w*\s*:", line.strip()) is not None:
             return "Case"
         elif re.search(r"\selse\s\s*if\s*(\s*\S*\s*)", " " + line.strip()) is not None:
             return "ElseIfBranch"
@@ -222,7 +222,7 @@ class CResourceDebloater(ResourceDebloater):
                        re.search(r"\sswitch\s*(\s*\S*\s*)\s*{*", " " + self.lines[search_line].strip()) is not None:
                         previous_break = True
                         break
-                    elif re.search(r"case\s\s*\w\w*\s*:\w*", self.lines[search_line].strip()) is not None:
+                    elif re.search(r"case\s\s*\w\w*\s*:", self.lines[search_line].strip()) is not None:
                         previous_break = False
                         break
                     else:
@@ -250,8 +250,8 @@ class CResourceDebloater(ResourceDebloater):
                         brace_count += self.lines[search_line].count("{")
                         brace_count -= self.lines[search_line].count("}")
 
-                        if re.search(r"case\s\s*\w\w*\s*:\w*", self.lines[search_line].strip()) is not None or \
-                           re.search(r"default\s\s*\w\w*\s*:\w*", self.lines[search_line].strip()) is not None or \
+                        if re.search(r"case\s\s*\w\w*\s*:", self.lines[search_line].strip()) is not None or \
+                           re.search(r"default\s*:", self.lines[search_line].strip()) is not None or \
                            brace_count < 0:
                             case_end = search_line - 1
 
@@ -275,7 +275,7 @@ class CResourceDebloater(ResourceDebloater):
                             self.lines.pop(case_end)
                             case_end -= 1
                         self.lines[annotation_line] = f"{self.annotation_sequence} Case Block Debloated.\n"
-                        self.lines.insert(annotation_line + 1, " \n")
+                        self.lines.insert(annotation_line + 1, "\n")
 
             elif construct == "Statement":
                 self.lines[annotation_line] = f"{self.annotation_sequence} Statement Debloated.\n"
