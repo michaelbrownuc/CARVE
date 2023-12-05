@@ -136,7 +136,7 @@ class CResourceDebloater(ResourceDebloater):
                         self.lines.pop(block_end)
                         block_end -= 1
                     self.lines[annotation_line] = f"{self.annotation_sequence} Code Block Debloated.\n"
-                    self.lines.insert(annotation_line + 1, " \n")
+                    self.lines.insert(annotation_line + 1, "\n")
 
             elif construct == "IfBranch" or construct == "ElseIfBranch":
                 # Removing an If or and Else If branch can result in inadvertent execution of an else block if they are
