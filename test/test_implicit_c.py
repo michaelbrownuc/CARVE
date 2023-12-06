@@ -1,4 +1,7 @@
-"""Test C Debloater"""
+"""Test C Debloater
+
+Some code inputs are from the libmodus project in sample/libmodbus
+"""
 from carve.resource_debloater.CResourceDebloater import CResourceDebloater
 
 
@@ -9,7 +12,7 @@ def test_if_single():
 if (condition == 1) {
     fprintf(stderr, "Condition is one.\\n");
 }
-else if (condition == 1) {
+else if (condition == 2) {
     fprintf(stderr, "Condition is two.\\n");
 }
 else {
@@ -21,7 +24,7 @@ else {
 /// If / Else If Code Block Debloated.
 if (condition == 1) {
 }
-else if (condition == 1) {
+else if (condition == 2) {
     fprintf(stderr, "Condition is two.\\n");
 }
 else {
@@ -44,7 +47,7 @@ if (condition == 1)
 {
     fprintf(stderr, "Condition is one.\\n");
 }
-else if (condition == 1) {
+else if (condition == 2) {
     fprintf(stderr, "Condition is two.\\n");
 }
 else {
@@ -57,7 +60,7 @@ else {
 if (condition == 1)
 {
 }
-else if (condition == 1) {
+else if (condition == 2) {
     fprintf(stderr, "Condition is two.\\n");
 }
 else {
@@ -80,7 +83,7 @@ if (condition == 1) {
     fprintf(stderr, "Condition is not zero.\\n");
     fprintf(stderr, "Condition is not two.\\n");
 }
-else if (condition == 1) {
+else if (condition == 2) {
     fprintf(stderr, "Condition is two.\\n");
 }
 else {
@@ -92,7 +95,7 @@ else {
 /// If / Else If Code Block Debloated.
 if (condition == 1) {
 }
-else if (condition == 1) {
+else if (condition == 2) {
     fprintf(stderr, "Condition is two.\\n");
 }
 else {
@@ -113,7 +116,7 @@ if (condition == 1) {
     fprintf(stderr, "Condition is one.\\n");
 }
 ///[Variant_A]
-else if (condition == 1) {
+else if (condition == 2) {
     fprintf(stderr, "Condition is two.\\n");
     fprintf(stderr, "Condition is not one.\\n");
     fprintf(stderr, "Condition is not something else.\\n");
@@ -128,7 +131,7 @@ if (condition == 1) {
     fprintf(stderr, "Condition is one.\\n");
 }
 /// If / Else If Code Block Debloated.
-else if (condition == 1) {
+else if (condition == 2) {
 }
 else {
     fprintf(stderr, "Condition is something else.\\n");
@@ -152,7 +155,7 @@ if (condition == 1) {
         fprintf(stderr, "Condition is one.\\n");
     }
 }
-else if (condition == 1) {
+else if (condition == 2) {
     fprintf(stderr, "Condition is two.\\n");
 }
 else {
@@ -164,7 +167,7 @@ else {
 /// If / Else If Code Block Debloated.
 if (condition == 1) {
 }
-else if (condition == 1) {
+else if (condition == 2) {
     fprintf(stderr, "Condition is two.\\n");
 }
 else {
@@ -178,6 +181,67 @@ else {
     output = "".join(debloater.lines)
     assert output == expected
 
+def test_if_condition_multiline():
+    input = \
+"""
+///[Variant_A]
+if (condition == 1 ||
+    condition < 2 ||
+    condition > 0) {
+    fprintf(stderr, "Condition is one.\\n");
+}
+else if (condition == 2) {
+    fprintf(stderr, "Condition is two.\\n");
+}
+"""
+    expected = \
+"""
+/// If / Else If Code Block Debloated.
+if (condition == 1 ||
+    condition < 2 ||
+    condition > 0) {
+}
+else if (condition == 2) {
+    fprintf(stderr, "Condition is two.\\n");
+}
+"""
+    debloater = CResourceDebloater(location="dummy", target_features={"Variant_A"})
+    debloater.lines = input.splitlines(keepends=True)
+    location = 1
+    debloater.process_implicit_annotation(location)
+    output = "".join(debloater.lines)
+    assert output == expected
+
+def test_if_else_condition_multiline():
+    input = \
+"""
+if (condition == 1) {
+    fprintf(stderr, "Condition is one.\\n");
+}
+///[Variant_A]
+else if (condition == 2 &&
+        condition > 1 &&
+        condition < 3) {
+    fprintf(stderr, "Condition is two.\\n");
+}
+"""
+    expected = \
+"""
+if (condition == 1) {
+    fprintf(stderr, "Condition is one.\\n");
+}
+/// If / Else If Code Block Debloated.
+else if (condition == 2 &&
+        condition > 1 &&
+        condition < 3) {
+}
+"""
+    debloater = CResourceDebloater(location="dummy", target_features={"Variant_A"})
+    debloater.lines = input.splitlines(keepends=True)
+    location = 4
+    debloater.process_implicit_annotation(location)
+    output = "".join(debloater.lines)
+    assert output == expected
 
 def test_func_def():
     input = \
@@ -482,3 +546,87 @@ switch (switchval) {
     debloater.process_implicit_annotation(location)
     output = "".join(debloater.lines)
     assert output == expected
+
+def test_simple_statement():
+    input = \
+"""
+if (condition == 1)
+{
+    ///[Variant_A]
+    fprintf(stderr, "Condition is one.\\n");
+}
+else {
+    fprintf(stderr, "Condition is something else.\\n");
+}
+"""
+    expected = \
+"""
+if (condition == 1)
+{
+/// Statement Debloated.
+
+}
+else {
+    fprintf(stderr, "Condition is something else.\\n");
+}
+"""
+    debloater = CResourceDebloater(location="dummy", target_features={"Variant_A"})
+    debloater.lines = input.splitlines(keepends=True)
+    location = 3
+    debloater.process_implicit_annotation(location)
+    output = "".join(debloater.lines)
+    assert output == expected
+
+def test_get_construct_statement():
+    line = "fprintf(stderr, \"Condition is one.\\n\");"
+    res = CResourceDebloater.get_construct(line)
+    expected = "Statement"
+    assert res == expected
+
+def test_get_construct_if():
+    line = "if (cfsetispeed(&tios, speed) < 0)"
+    res = CResourceDebloater.get_construct(line)
+    expected = "IfBranch"
+    assert res == expected
+
+def test_get_construct_struct():
+    line = "struct _modbus {"
+    res = CResourceDebloater.get_construct(line)
+    expected = "StructDefinition"
+    assert res == expected
+
+def test_get_construct_func():
+    line = "static int _modbus_rtu_pre_check_confirmation(modbus_t *ctx, const uint8_t *req, const uint8_t *rsp, int rsp_length)"
+    res = CResourceDebloater.get_construct(line)
+    expected = "FunctionDefinition"
+    assert res == expected
+
+def test_get_construct_case():
+    line = "case MODBUS_FC_READ_DISCRETE_INPUTS: "
+    res = CResourceDebloater.get_construct(line)
+    expected = "Case"
+    assert res == expected
+
+def test_get_construct_else_if():
+    line = "        else if (strcmp(argv[1], \"tcppi\") == 0) {"
+    res = CResourceDebloater.get_construct(line)
+    expected = "ElseIfBranch"
+    assert res == expected
+
+def test_get_construct_else():
+    line = "    else {   "
+    res = CResourceDebloater.get_construct(line)
+    expected = "ElseBranch"
+    assert res == expected
+
+def test_get_construct_else_no_brace():
+    line = "    else "
+    res = CResourceDebloater.get_construct(line)
+    expected = "ElseBranch"
+    assert res == expected
+
+def test_get_construct_no_match():
+    line = "else if switch break case"
+    res = CResourceDebloater.get_construct(line)
+    expected = "Statement"
+    assert res == expected

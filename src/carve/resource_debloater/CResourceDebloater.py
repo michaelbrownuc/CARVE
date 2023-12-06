@@ -27,14 +27,18 @@ class CResourceDebloater(ResourceDebloater):
             cases in a switch statement (aware of fall through mechanics)
     """
     # Regex patterns for identifying constructs
-    CASE_CONSTRUCT_PAT = r"case\s\s*\w\w*\s*:"
-    ELSE_IF_CONSTRUCT_PAT = r"\selse\s\s*if\s*(\s*\S*\s*)"
-    IF_CONSTRUCT_PAT = r"\sif\s*(\s*\S*\s*)"
-    ELSE_CONSTRUCT_PAT = r"\selse\s*{*"
-    FUNC_STRUCT_CONSTRUCT_PAT = r"\w\w*\s\s*\w\w*\s*(\s*\S*\s*)\s*{*"
+    # They search a trimmed string and are ordered by precedence in get_construct
+    # They err on the side of permissiveness, leaving it to the developer to write valid C.
+    CASE_CONSTRUCT_PAT = r"case\s+\w+\s*:"
+    ELSE_IF_CONSTRUCT_PAT = r"\selse\s+if\s*\("
+    IF_CONSTRUCT_PAT = r"\sif\s*\("
+    ELSE_CONSTRUCT_PAT = r"\selse($|\s*\{)"
+    FUNC_CONSTRUCT_PAT = r"\w+\s+\w+\s*\(.*\)"
+    STRUCT_CONSTRUCT_PAT = r"(^|\s+)struct\s+\w+"
+
     # Other regex patterns
     BREAK_PAT = r"\sbreak\s*;"
-    SWITCH_PAT = r"\sswitch\s*(\s*\S*\s*)\s*{*"
+    SWITCH_PAT = r"\sswitch\s*\(.*\)"
     DEFAULT_PAT = r"default\s*:"
 
     def __init__(self, location, target_features):
@@ -56,6 +60,7 @@ class CResourceDebloater(ResourceDebloater):
             Function definitions
             Switch cases
             Execution branches (if, else if, else)
+            Struct definitions
             Individual statements
 
         :param str line: line of code immediately following an annotation
@@ -70,8 +75,10 @@ class CResourceDebloater(ResourceDebloater):
             return "IfBranch"
         elif re.search(CResourceDebloater.ELSE_CONSTRUCT_PAT, " " + line.strip()) is not None:
             return "ElseBranch"
-        elif re.search(CResourceDebloater.FUNC_STRUCT_CONSTRUCT_PAT, line.strip()) is not None:
-            return "FunctionStructDefinition"
+        elif re.search(CResourceDebloater.FUNC_CONSTRUCT_PAT, line.strip()) is not None:
+            return "FunctionDefinition"
+        elif re.search(CResourceDebloater.STRUCT_CONSTRUCT_PAT, line.strip()) is not None:
+            return "StructDefinition"
         else:
             return "Statement"
 
@@ -107,9 +114,6 @@ class CResourceDebloater(ResourceDebloater):
             Not Supported: This processor assumes that all single-statement debloating operations can remove the line
             wholesale. Multi-line statements will not be completely debloated.
 
-            Not Supported: This processor assumes all execution branch statements have the entire condition expressed on
-            the same line as the keyword.
-
             Not Supported: This processor expects all branches to be enclosed in braces. Single-statement blocks will cause
             errors.
 
@@ -136,13 +140,25 @@ class CResourceDebloater(ResourceDebloater):
             }
             mystruct;
             ```
+            Not Supported: Braces on the same line as case branches that can be debloated. The specific error is if a brace is on the same line
+            as a case label and only the label is debloated, then there will be a dangling brace. This annotation will generate invalid code:
+            ```
+            switch (switchval) {
+                case 1:
+                ///[Variant_A]
+                case 2: {
+                    fprintf(stderr, "case 2\\n");
+                }
+            }
+            ```
+            Not Supported: Annotated implicit lines that have non-ASCII identifiers.
             """
             # Look at next line to determine the implicit construct
             construct_line = annotation_line + 1
             construct = CResourceDebloater.get_construct(self.lines[construct_line])
 
             # Process implicit annotation based on construct identified
-            if construct == "FunctionStructDefinition" or construct == "ElseBranch":
+            if construct == "FunctionDefinition" or construct == "StructDefinition" or construct == "ElseBranch":
                 # Function definitions, struct definitions, else branches are simple block removals.
                 search_line = construct_line
                 open_brace_counted = False
