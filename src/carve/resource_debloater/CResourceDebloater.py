@@ -33,8 +33,8 @@ class CResourceDebloater(ResourceDebloater):
     ELSE_IF_CONSTRUCT_PAT = r"\selse\s+if\s*\("
     IF_CONSTRUCT_PAT = r"\sif\s*\("
     ELSE_CONSTRUCT_PAT = r"\selse($|\s*\{)"
-    FUNC_CONSTRUCT_PAT = r"\w+\s+\w+\s*\(.*\)"
-    STRUCT_CONSTRUCT_PAT = r"(^|\s+)struct\s+\w+"
+    FUNC_CONSTRUCT_PAT = r"\w+[\s\*]+\w+\s*\(.*\)($|\s*\{)"
+    STRUCT_CONSTRUCT_PAT = r"(^|\s+)struct\s+\w+($|\s*\{)"
 
     # Other regex patterns
     BREAK_PAT = r"\sbreak\s*;"
@@ -152,6 +152,7 @@ class CResourceDebloater(ResourceDebloater):
             }
             ```
             Not Supported: Annotated implicit lines that have non-ASCII identifiers.
+            Not Supported: Anonymous structs.
             """
             # Look at next line to determine the implicit construct
             construct_line = annotation_line + 1

@@ -626,7 +626,26 @@ def test_get_construct_else_no_brace():
     assert res == expected
 
 def test_get_construct_no_match():
-    line = "else if switch break case"
+    line = "\"else if switch break struct case\""
+    res = CResourceDebloater.get_construct(line)
+    expected = "Statement"
+    assert res == expected
+
+def test_get_construct_func_pointer():
+    line = "modbus_t* modbus_new_tcp(const char *ip, int port)"
+    res = CResourceDebloater.get_construct(line)
+    expected = "FunctionDefinition"
+    assert res == expected
+
+def test_get_construct_func_struct():
+    line = "struct MyStruct create_mystruct(int a, int b)"
+    res = CResourceDebloater.get_construct(line)
+    expected = "FunctionDefinition"
+    assert res == expected
+
+def test_get_construct_statement_close_to_func():
+    """This statement is close to the function def regex"""
+    line = "a = a * func(b);"
     res = CResourceDebloater.get_construct(line)
     expected = "Statement"
     assert res == expected
