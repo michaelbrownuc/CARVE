@@ -26,6 +26,20 @@ class CResourceDebloater(ResourceDebloater):
             statement
             cases in a switch statement (aware of fall through mechanics)
     """
+    # Regex patterns for identifying constructs
+    # They search a trimmed string and are ordered by precedence in get_construct
+    # They err on the side of permissiveness, leaving it to the developer to write valid C.
+    CASE_CONSTRUCT_PAT = r"case\s+\w+\s*:"
+    ELSE_IF_CONSTRUCT_PAT = r"\selse\s+if\s*\("
+    IF_CONSTRUCT_PAT = r"\sif\s*\("
+    ELSE_CONSTRUCT_PAT = r"\selse($|\s*\{)"
+    FUNC_CONSTRUCT_PAT = r"\w+[\s\*]+\w+\s*\(.*\)($|\s*\{)"
+    STRUCT_CONSTRUCT_PAT = r"(^|\s+)struct\s+\w+($|\s*\{)"
+
+    # Other regex patterns
+    BREAK_PAT = r"\sbreak\s*;"
+    SWITCH_PAT = r"\sswitch\s*\(.*\)"
+    DEFAULT_PAT = r"default\s*:"
 
     def __init__(self, location, target_features):
         """
@@ -46,22 +60,25 @@ class CResourceDebloater(ResourceDebloater):
             Function definitions
             Switch cases
             Execution branches (if, else if, else)
+            Struct definitions
             Individual statements
 
         :param str line: line of code immediately following an annotation
         :return:
         """
         
-        if re.search("case\s\s*\w\w*\s*:\w*", line.strip()) is not None:
+        if re.search(CResourceDebloater.CASE_CONSTRUCT_PAT, line.strip()) is not None:
             return "Case"
-        elif re.search("\selse\s\s*if\s*(\s*\S*\s*)", " " + line.strip()) is not None:
+        elif re.search(CResourceDebloater.ELSE_IF_CONSTRUCT_PAT, " " + line.strip()) is not None:
             return "ElseIfBranch"
-        elif re.search("\sif\s*(\s*\S*\s*)", " " + line.strip()) is not None:
+        elif re.search(CResourceDebloater.IF_CONSTRUCT_PAT, " " + line.strip()) is not None:
             return "IfBranch"
-        elif re.search("\selse\s*{*", " " + line.strip()) is not None:
+        elif re.search(CResourceDebloater.ELSE_CONSTRUCT_PAT, " " + line.strip()) is not None:
             return "ElseBranch"
-        elif re.search("\w\w*\s\s*\w\w*\s*(\s*\S*\s*)\s*{*", line.strip()) is not None:
-            return "FunctionStructDefinition"
+        elif re.search(CResourceDebloater.FUNC_CONSTRUCT_PAT, line.strip()) is not None:
+            return "FunctionDefinition"
+        elif re.search(CResourceDebloater.STRUCT_CONSTRUCT_PAT, line.strip()) is not None:
+            return "StructDefinition"
         else:
             return "Statement"
 
@@ -70,19 +87,8 @@ class CResourceDebloater(ResourceDebloater):
         Processes an implicit or explicit (! and ~) debloating operation annotated at the specified line.
 
         This debloating module operates largely on a line by line basis. It does NOT support all types of source code
-        authoring styles. Many code authoring styles are not supported and will cause errors in debloating.
-
-        Not Supported: Implicit annotations must be immediately preceding the construct to debloat.  There cannot
-        be empty lines, comments, or block comments between the annotation and the construct.
-
-        Not Supported: This processor assumes that all single statement debloating operations can remove the line
-        wholesale. Multi-line statements will not be completely debloated.
-
-        Not Supported: This processor assumes all execution branch statements have the entire condition expressed on
-        the same line as the keyword.
-
-        Not Supported: This processor expects all branches to be enclosed in braces, single statement blocks will cause
-        errors.
+        authoring styles. Many code authoring styles are not supported and will cause errors in debloating. Specifically,
+        the implicit module is style-sensitive. See the documentation of process_implicit_annotation for more.
 
         :param int annotation_line: Line where annotation to be processed is located.
         :return: None
@@ -92,13 +98,68 @@ class CResourceDebloater(ResourceDebloater):
         is_explicit_annotation = last_char in {"~", "!"}
         if is_explicit_annotation:
             self.process_explicit_annotation(annotation_line)
-        # If not explicit, look at next line to determine the implicit cue
         else:
+            self.process_implicit_annotation(annotation_line)
+
+
+    def process_implicit_annotation(self, annotation_line: int) -> None:
+            """Processes an implicit annotation
+
+            The C implicit annotation processor expects a particular style. This is a list of what is not supported,
+            although it is not exhaustive:
+
+            Not Supported: Implicit annotations must be immediately preceding the construct to debloat. There cannot
+            be empty lines, comments, or block comments between the annotation and the construct.
+
+            Not Supported: This processor assumes that all single-statement debloating operations can remove the line
+            wholesale. Multi-line statements will not be completely debloated.
+
+            Not Supported: This processor expects all branches to be enclosed in braces. Single-statement blocks will cause
+            errors.
+
+            Not Supported: This processor expects annotations which only debloat the body of a construct (`if`, `else if`)
+            to have the construct and body statements on separate lines. This annotation is invalid:
+            ```
+            ///[Variant_A]
+            if (condition == 1) { fprintf(stderr, "Condition is one.\\n"); }
+            ```
+            Not Supported: Implicit annotations which are inside the braces of the previous statement. This annotation is invalid:
+            ```
+            if (condition == 1) {
+                fprintf(stderr, "Condition is one.\\n");
+            ///[Variant_A]
+            } else if (condition == 1) {
+                fprintf(stderr, "Condition is two.\\n");
+            }
+            ```
+            Not Supported: Struct typedefs cannot extend past the line of the last brace. This annotation is invalid:
+            ```
+            typedef struct _mystruct
+            {
+            int field_a;
+            }
+            mystruct;
+            ```
+            Not Supported: Braces on the same line as case branches that can be debloated. The specific error is if a brace is on the same line
+            as a case label and only the label is debloated, then there will be a dangling brace. This annotation will generate invalid code:
+            ```
+            switch (switchval) {
+                case 1:
+                ///[Variant_A]
+                case 2: {
+                    fprintf(stderr, "case 2\\n");
+                }
+            }
+            ```
+            Not Supported: Annotated implicit lines that have non-ASCII identifiers.
+            Not Supported: Anonymous structs.
+            """
+            # Look at next line to determine the implicit construct
             construct_line = annotation_line + 1
             construct = CResourceDebloater.get_construct(self.lines[construct_line])
 
             # Process implicit annotation based on construct identified
-            if construct == "FunctionStructDefinition" or construct == "ElseBranch":
+            if construct == "FunctionDefinition" or construct == "StructDefinition" or construct == "ElseBranch":
                 # Function definitions, struct definitions, else branches are simple block removals.
                 search_line = construct_line
                 open_brace_counted = False
@@ -129,7 +190,7 @@ class CResourceDebloater(ResourceDebloater):
                         self.lines.pop(block_end)
                         block_end -= 1
                     self.lines[annotation_line] = f"{self.annotation_sequence} Code Block Debloated.\n"
-                    self.lines.insert(annotation_line + 1, " \n")
+                    self.lines.insert(annotation_line + 1, "\n")
 
             elif construct == "IfBranch" or construct == "ElseIfBranch":
                 # Removing an If or and Else If branch can result in inadvertent execution of an else block if they are
@@ -169,7 +230,6 @@ class CResourceDebloater(ResourceDebloater):
                     # Need this in case the braces aren't on their own line.
                     # Remove lines in bedtween the open and close curly brace.
                     block_end -= 1
-                    open_brace_line += 1
                     while block_end != open_brace_line:
                         self.lines.pop(block_end)
                         block_end -= 1
@@ -185,11 +245,11 @@ class CResourceDebloater(ResourceDebloater):
                 previous_break = None
 
                 while search_line >= 0:
-                    if re.search("\sbreak\s*;", " " + self.lines[search_line].strip()) is not None or \
-                       re.search("\sswitch\s*(\s*\S*\s*)\s*{*", " " + self.lines[search_line].strip()) is not None:
+                    if re.search(CResourceDebloater.BREAK_PAT, " " + self.lines[search_line].strip()) is not None or \
+                       re.search(CResourceDebloater.SWITCH_PAT, " " + self.lines[search_line].strip()) is not None:
                         previous_break = True
                         break
-                    elif re.search("case\s\s*\w\w*\s*:\w*", self.lines[search_line].strip()) is not None:
+                    elif re.search(CResourceDebloater.CASE_CONSTRUCT_PAT, self.lines[search_line].strip()) is not None:
                         previous_break = False
                         break
                     else:
@@ -217,8 +277,8 @@ class CResourceDebloater(ResourceDebloater):
                         brace_count += self.lines[search_line].count("{")
                         brace_count -= self.lines[search_line].count("}")
 
-                        if re.search("case\s\s*\w\w*\s*:\w*", self.lines[search_line].strip()) is not None or \
-                           re.search("default\s\s*\w\w*\s*:\w*", self.lines[search_line].strip()) is not None or \
+                        if re.search(CResourceDebloater.CASE_CONSTRUCT_PAT, self.lines[search_line].strip()) is not None or \
+                           re.search(CResourceDebloater.DEFAULT_PAT, self.lines[search_line].strip()) is not None or \
                            brace_count < 0:
                             case_end = search_line - 1
 
@@ -226,7 +286,7 @@ class CResourceDebloater(ResourceDebloater):
                             if self.lines[case_end].find(f"{self.annotation_sequence}[") > -1:
                                 case_end -= 1
                             break
-                        elif re.search("\sbreak\s*;", " " + self.lines[search_line].strip()) is not None:
+                        elif re.search(CResourceDebloater.BREAK_PAT, " " + self.lines[search_line].strip()) is not None:
                             case_end = search_line
                             break
                         else:
@@ -242,7 +302,7 @@ class CResourceDebloater(ResourceDebloater):
                             self.lines.pop(case_end)
                             case_end -= 1
                         self.lines[annotation_line] = f"{self.annotation_sequence} Case Block Debloated.\n"
-                        self.lines.insert(annotation_line + 1, " \n")
+                        self.lines.insert(annotation_line + 1, "\n")
 
             elif construct == "Statement":
                 self.lines[annotation_line] = f"{self.annotation_sequence} Statement Debloated.\n"
